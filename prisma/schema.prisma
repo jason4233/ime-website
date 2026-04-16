@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════
+// 使用者 & 認證
+// ═══════════════════════════════════════
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  hashedPassword String
+  name           String?
+  role           Role     @default(EDITOR)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ═══════════════════════════════════════
+// 前台內容區塊
+// ═══════════════════════════════════════
+
+model HeroSection {
+  id          String  @id @default(cuid())
+  headline    String
+  subheadline String
+  ctaText     String  @default("預約體驗")
+  ctaLink     String  @default("/contact")
+  bgImageUrl  String?
+  order       Int     @default(0)
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BrandStorySection {
+  id           String @id @default(cuid())
+  title        String
+  bodyRichText String // TipTap JSON string
+  imageUrl     String?
+  order        Int    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Founder {
+  id       String  @id @default(cuid())
+  name     String
+  title    String  // 職稱
+  bio      String
+  quote    String?
+  photoUrl String?
+  order    Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String @id @default(cuid())
+  name        String
+  tagline     String
+  description String
+  price       Float?
+  imageUrl    String?
+  features    Json?  // JSON array of feature strings
+  order       Int    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Course {
+  id              String  @id @default(cuid())
+  name            String
+  shortDesc       String
+  fullDesc        String
+  durationMinutes Int     @default(120)
+  price           Float?
+  suitableFor     String? // e.g. "美容師、護理師、想轉職者"
+  imageUrl        String?
+  order           Int     @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointments Appointment[]
+}
+
+model Certificate {
+  id       String  @id @default(cuid())
+  title    String
+  issuer   String
+  imageUrl String?
+  pdfUrl   String?
+  order    Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NewsCard {
+  id          String   @id @default(cuid())
+  mediaLogoUrl String?
+  mediaName   String
+  title       String
+  excerpt     String?
+  date        DateTime
+  url         String?
+  order       Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id           String  @id @default(cuid())
+  customerName String
+  age          Int?
+  courseType    String?
+  rating       Int     @default(5)
+  content      String
+  avatarUrl    String?
+  order        Int     @default(0)
+  isVideo      Boolean @default(false)
+  videoUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model BeforeAfterCase {
+  id             String  @id @default(cuid())
+  title          String
+  beforeImageUrl String
+  afterImageUrl  String
+  daysBetween    Int
+  notes          String?
+  order          Int     @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+enum FactorySection {
+  RND
+  FACTORY
+}
+
+model FactoryHighlight {
+  id          String         @id @default(cuid())
+  section     FactorySection @default(FACTORY)
+  title       String
+  description String
+  imageUrl    String?
+  iconName    String?
+  order       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+// ═══════════════════════════════════════
+// 表單提交（預約 & 加盟申請）
+// ═══════════════════════════════════════
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  DONE
+  CANCELLED
+}
+
+model Appointment {
+  id                String            @id @default(cuid())
+  name              String
+  phone             String
+  email             String?
+  courseId           String?
+  course            Course?           @relation(fields: [courseId], references: [id])
+  preferredDate     DateTime?
+  preferredTimeSlot String?           // e.g. "14:00-15:00"
+  notes             String?
+  status            AppointmentStatus @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+}
+
+model DistributorApplication {
+  id         String            @id @default(cuid())
+  name       String
+  phone      String
+  email      String?
+  background String?           // 現職背景
+  motivation String?           // 加入動機
+  status     ApplicationStatus @default(PENDING)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+// ═══════════════════════════════════════
+// 全站設定
+// ═══════════════════════════════════════
+
+model SiteSettings {
+  id            String  @id @default(cuid())
+  siteTitle     String  @default("I ME — Exosome Beauty for you")
+  siteDescription String @default("")
+  lineUrl       String?
+  igUrl         String?
+  fbUrl         String?
+  contactPhone  String?
+  contactEmail  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

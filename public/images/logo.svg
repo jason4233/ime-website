@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <!-- I -->
+  <text x="10" y="48" font-family="'Cormorant Garamond', 'Playfair Display', serif" font-size="52" font-weight="600" fill="#0A0A0A" letter-spacing="2">I</text>
+  <!-- ME -->
+  <text x="40" y="48" font-family="'Cormorant Garamond', 'Playfair Display', serif" font-size="52" font-weight="600" fill="#7B2FBE" letter-spacing="4">ME</text>
+  <!-- Slogan -->
+  <text x="10" y="58" font-family="'Cormorant Garamond', serif" font-size="9" font-style="italic" fill="#B8953F" letter-spacing="1.5">Exosome Beauty for you</text>
+</svg>
