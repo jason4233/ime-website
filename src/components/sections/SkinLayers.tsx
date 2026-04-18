@@ -174,7 +174,7 @@ function SkinLayer3D({ layer, active }: { layer: LayerType; active: boolean }) {
 
       {/* 玻璃體內的微血管網絡（所有層可見，但不同密度） */}
       <g clipPath={`url(#body-clip-${id})`} opacity={pattern === "collagen" ? 0.7 : 0.35}>
-        <CapillaryNetwork surface={surface} />
+        <CapillaryNetwork />
       </g>
 
       {/* 前緣水平切面線（極微弱） */}
@@ -413,7 +413,7 @@ function LipidTexture({ surface }: { surface: LayerType["surface"]; id: number }
 }
 
 /** 微血管網絡（玻璃體內可見的粉色血管分支） */
-function CapillaryNetwork({ surface: _surface }: { surface: LayerType["surface"] }) {
+function CapillaryNetwork() {
   return (
     <>
       {/* 主幹水平血管（3 條） */}
