@@ -170,7 +170,7 @@ export function RecruitSection() {
         </div>
 
         {/* Act 3: 方案 */}
-        <div className="bg-night py-section-lg px-6 noise-overlay" ref={benefitsRef}>
+        <div className="bg-deep-purple py-section-lg px-6 noise-overlay" ref={benefitsRef}>
           <div className="max-w-5xl mx-auto">
             <TextReveal>
               <h2 className="font-serif-tc text-h2 text-ivory text-center mb-14">
@@ -202,7 +202,7 @@ export function RecruitSection() {
         </div>
 
         {/* Act 4: 行動 */}
-        <div className="bg-[#0C0C0C] py-section-lg px-6 noise-overlay">
+        <div className="bg-deep-rose py-section-lg px-6 noise-overlay">
           <div className="max-w-3xl mx-auto text-center">
             <TextReveal>
               <h2 className="font-serif-tc text-h1 text-ivory mb-6">

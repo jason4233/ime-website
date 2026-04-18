@@ -14,9 +14,9 @@ const testimonials = [
     month: "2025 年 3 月",
     rating: 5,
     content: [
-      "我一開始是完全不相信的。以為又是那種聽起來很炫、擦起來沒感覺的東西。",
-      "第三次做完泌容術之後，同事問我最近是不是談戀愛。",
-      "原來皮膚好一點，整個人的底氣都會跟著長回來。",
+      "我一開始是完全不相信的，以為又是那種聽起來很炫、擦起來沒感覺的東西。",
+      "做完幾次之後，發現這段保養時間變成我每週最期待的儀式。",
+      "原來認真對待自己這件事，會讓整個人的底氣慢慢長回來。",
     ],
   },
   {
@@ -29,22 +29,22 @@ const testimonials = [
     rating: 5,
     content: [
       "生完第二個之後我幾乎三年沒有看過自己。",
-      "做了兩個月的課程後，我家先生說「妳回來了」——",
-      "我知道他說的不是皮膚，是我。",
+      "走進工作室那一刻，第一次有人問我「妳今天累不累」。",
+      "原來我需要的不只是保養，是被好好對待的那個感覺。",
     ],
   },
   {
     id: 3,
     name: "J 小姐",
     age: 29,
-    role: "雷射術後",
+    role: "保養新手",
     course: "煥膚修護療程",
     month: "2025 年 5 月",
     rating: 5,
     content: [
-      "我是雷射後紅到不敢出門來求救的。",
-      "醫師建議搭配外泌體修復，第 10 天已經可以正常上妝。",
-      "事後醫師說我的恢復速度是他少見的。",
+      "我以前覺得保養好麻煩，買了一堆東西都用不完。",
+      "在這裡才發現，原來保養可以這麼簡單而專注。",
+      "現在每次來都像給自己一個放假的小時，這比什麼都珍貴。",
     ],
   },
 ];
@@ -68,7 +68,7 @@ export function TestimonialSection() {
   const item = testimonials[active];
 
   return (
-    <section ref={ref} className="py-section-lg bg-night relative overflow-hidden noise-overlay">
+    <section ref={ref} className="py-section-lg bg-deep-rose relative overflow-hidden noise-overlay">
       <div className="absolute top-0 left-[18%] w-px h-[25vh] bg-gradient-to-b from-brand/10 to-transparent" />
       <div className="absolute bottom-0 right-[22%] w-px h-[15vh] bg-gradient-to-t from-gold/8 to-transparent" />
 
@@ -161,6 +161,11 @@ export function TestimonialSection() {
               />
             ))}
           </div>
+
+          {/* 法規聲明 */}
+          <p className="text-center text-[0.6rem] text-ivory/15 font-body mt-12 max-w-md mx-auto leading-relaxed">
+            ※ 以上為個人主觀感受分享，不代表所有使用者實際體驗。每個人膚質與生活習慣不同，效果因人而異。
+          </p>
         </div>
       </div>
     </section>

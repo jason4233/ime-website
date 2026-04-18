@@ -1,9 +1,16 @@
 "use client";
 
 import { useRef } from "react";
+import dynamic from "next/dynamic";
 import { motion, useInView } from "framer-motion";
-import { ReactCompareSlider, ReactCompareSliderImage } from "react-compare-slider";
+import { ReactCompareSliderImage } from "react-compare-slider";
 import { TextReveal } from "@/components/ui/TextReveal";
+
+// 動態載入避免 SSR 階段呼叫 CSS.registerProperty
+const ReactCompareSlider = dynamic(
+  () => import("react-compare-slider").then((m) => m.ReactCompareSlider),
+  { ssr: false }
+);
 
 const cases = [
   {
@@ -11,7 +18,7 @@ const cases = [
     title: "雷射術後修復",
     days: 14,
     sessions: 3,
-    note: "皮秒雷射後搭配外泌體導入，泛紅退淡速度提升 80%",
+    note: "皮秒雷射後搭配外泌體導入，泛紅明顯舒緩（個人體驗，效果因人而異）",
     before: "https://placehold.co/500x600/2a1a1a/D4A89B?text=Before",
     after: "https://placehold.co/500x600/1a2a1a/B8953F?text=After",
   },
@@ -20,7 +27,7 @@ const cases = [
     title: "暗沉膚色改善",
     days: 30,
     sessions: 5,
-    note: "持續五次泌容術療程，光澤度提升 30%",
+    note: "持續五次泌容術療程，肌膚光澤度有感提升（個人體驗，效果因人而異）",
     before: "https://placehold.co/500x600/2a1a1a/D4A89B?text=Before",
     after: "https://placehold.co/500x600/1a2a1a/B8953F?text=After",
   },
@@ -29,7 +36,7 @@ const cases = [
     title: "細紋與鬆弛改善",
     days: 60,
     sessions: 8,
-    note: "深度抗老療程兩個月，平滑度提升 24%",
+    note: "持續保養兩個月，膚觸更加細緻平滑（個人體驗，效果因人而異）",
     before: "https://placehold.co/500x600/2a1a1a/D4A89B?text=Before",
     after: "https://placehold.co/500x600/1a2a1a/B8953F?text=After",
   },

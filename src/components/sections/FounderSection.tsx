@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { TextReveal } from "@/components/ui/TextReveal";
 
-// placeholder 創始人資料（之後由後台 API 提供）
+// placeholder 創始人資料（之後由後台 API 適配後替換 — 見 FounderSection 下方 signature）
 const founders = [
   {
     id: "moli",

@@ -58,8 +58,19 @@ const partners = [
   { name: "INCI 認證", en: "Mono ID: 40148" },
 ];
 
-export function HeroSection() {
+interface HeroData {
+  headline?: string | null;
+  subheadline?: string | null;
+  ctaText?: string | null;
+  ctaLink?: string | null;
+}
+
+export function HeroSection({ data }: { data?: HeroData | null } = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // DB 覆蓋：若 CMS 有資料，用 DB 的；否則 fallback 原硬編文字
+  const cmsSubline = data?.subheadline;
+  const cmsCtaText = data?.ctaText;
+  const cmsCtaLink = data?.ctaLink;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -111,12 +122,17 @@ export function HeroSection() {
         className="relative z-20 text-center px-6 max-w-5xl mx-auto"
       >
         {/* 主標第一行 — 辰宇落雁體 */}
-        <h1 className="font-handwriting leading-[1.15] tracking-[0.06em]">
-          <span className="block text-ivory text-[clamp(2.8rem,8vw,7rem)]">
-            <AnimatedText text="捨得，" delay={0.3} />
+        <h1 className="font-handwriting leading-[1.2] tracking-[0.08em]"
+          style={{
+            WebkitTextStroke: "0.3px transparent",
+            textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+            fontWeight: 300,
+          }}>
+          <span className="block text-ivory/95 text-[clamp(2.6rem,7.2vw,6.2rem)]">
+            <AnimatedText text="捨得," delay={0.3} />
           </span>
           {/* 第二行 — 「最高級」三字墨金 */}
-          <span className="block text-ivory text-[clamp(2.8rem,8vw,7rem)] mt-2">
+          <span className="block text-ivory/95 text-[clamp(2.6rem,7.2vw,6.2rem)] mt-3">
             <AnimatedText
               text="才是最高級的保養"
               delay={0.7}
@@ -141,7 +157,7 @@ export function HeroSection() {
           className="space-y-2"
         >
           <p className="text-[clamp(0.95rem,1.6vw,1.2rem)] text-ivory/40 font-sans-tc font-light tracking-wide leading-[1.8]">
-            每 1mL 安瓶 2,000 億顆外泌體。
+            {cmsSubline ?? "每 1mL 安瓶 2,000 億顆外泌體。"}
           </p>
           <p className="text-[clamp(0.95rem,1.6vw,1.2rem)] text-ivory/35 font-sans-tc font-light tracking-wide leading-[1.8]">
             給捨得對自己好的妳。
@@ -155,8 +171,8 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 2.6, ease: [0.16, 1, 0.3, 1] }}
           className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-5"
         >
-          <MagneticButton href="/contact" variant="gold">
-            預約泌容術體驗
+          <MagneticButton href={cmsCtaLink ?? "/contact"} variant="gold">
+            {cmsCtaText ?? "預約泌容術體驗"}
           </MagneticButton>
           <MagneticButton href="/about" variant="ghost" className="text-ivory/40 border-ivory/10 hover:text-ivory/70 hover:border-ivory/25">
             了解外泌體原理

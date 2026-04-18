@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, useMotionValueEvent, useScroll, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/ui/Logo";
 
@@ -16,26 +17,31 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { scrollY } = useScroll();
+  const pathname = usePathname();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 60);
   });
 
-  // 未滾動時在深色 Hero 上 → 用淺色；滾動後有 ivory 背景 → 用深色
-  const navTextColor = scrolled ? "text-night/60 hover:text-night" : "text-ivory/60 hover:text-ivory";
-  const hamburgerColor = scrolled ? "bg-night" : "bg-ivory";
+  // 只有首頁 Hero 未滾動時才用淺色字（Hero 背景是深色）
+  // 其他頁面頂部是淺色背景 → 永遠用深色字
+  const isHome = pathname === "/";
+  const onDarkHero = isHome && !scrolled;
+
+  const navTextColor = onDarkHero ? "text-ivory/70 hover:text-ivory" : "text-night/70 hover:text-night";
+  const hamburgerColor = onDarkHero ? "bg-ivory" : "bg-night";
 
   return (
     <>
       <motion.header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-spring ${
-          scrolled
-            ? "py-3 bg-ivory/80 backdrop-blur-xl shadow-elevated"
-            : "py-6 bg-transparent"
+          onDarkHero
+            ? "py-6 bg-transparent"
+            : "py-3 bg-ivory/85 backdrop-blur-xl shadow-elevated"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
-          <Logo variant={scrolled ? "dark" : "light"} showSlogan={!scrolled} />
+          <Logo variant={onDarkHero ? "light" : "dark"} showSlogan={onDarkHero} />
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">

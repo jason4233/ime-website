@@ -1,11 +1,45 @@
-import { AdminPageShell } from "@/components/admin/AdminPageShell";
+"use client";
+
+import { CrudPage } from "@/components/admin/CrudPage";
+import type { Column } from "@/components/admin/AdminTable";
+
+interface BeforeAfterCase {
+  id: string;
+  title: string;
+  beforeImageUrl: string;
+  afterImageUrl: string;
+  daysBetween: number;
+  notes: string;
+  order?: number;
+}
+
+const columns: Column<BeforeAfterCase>[] = [
+  { key: "title", label: "標題" },
+  { key: "daysBetween", label: "間隔天數" },
+  {
+    key: "notes",
+    label: "備註",
+    render: (item) =>
+      item.notes?.slice(0, 40) + (item.notes?.length > 40 ? "..." : ""),
+  },
+];
+
+const fields = [
+  { name: "title", label: "標題", type: "text" as const, required: true },
+  { name: "beforeImageUrl", label: "術前圖片網址", type: "text" as const, required: true },
+  { name: "afterImageUrl", label: "術後圖片網址", type: "text" as const, required: true },
+  { name: "daysBetween", label: "間隔天數", type: "number" as const, required: true },
+  { name: "notes", label: "備註", type: "textarea" as const },
+];
 
 export default function AdminBeforeAfterPage() {
   return (
-    <AdminPageShell
+    <CrudPage<BeforeAfterCase>
       title="前後對比"
-      description="管理療程前後對比案例"
       icon="🔄"
+      apiPath="/api/admin/before-after"
+      columns={columns}
+      fields={fields}
     />
   );
 }

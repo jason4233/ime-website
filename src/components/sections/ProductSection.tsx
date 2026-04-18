@@ -76,7 +76,7 @@ export function ProductSection() {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative h-screen overflow-hidden bg-night noise-overlay">
+    <section ref={containerRef} className="relative h-screen overflow-hidden bg-deep-purple noise-overlay">
       {/* 裝飾 */}
       <div className="absolute top-0 left-[20%] w-px h-[20vh] bg-gradient-to-b from-brand/10 to-transparent z-10" />
       <div className="absolute bottom-0 right-[15%] w-px h-[15vh] bg-gradient-to-t from-gold/10 to-transparent z-10" />

@@ -28,6 +28,18 @@ const config: Config = {
           nude: "#D4A89B",
           light: "#E8C4BA",
         },
+        // 品牌深色變體（溫柔不壓迫，適合長時間閱讀）
+        deep: {
+          purple: "#3A2A4E",     // 中深紫 — 柔霧莓紫
+          amber: "#4A3E32",      // 中深琥珀 — 溫暖焦糖
+          rose: "#4F3A3A",       // 中深玫瑰 — 親密可可
+          forest: "#2F3E38",     // 中深森林 — 沉穩綠灰
+        },
+        cream: {
+          warm: "#F5EBE5",       // 暖米
+          rose: "#F0E2DC",       // 玫瑰米
+          amber: "#F2E9D5",      // 琥珀米
+        },
         // 功能色
         surface: {
           base: "#FAF7F2",

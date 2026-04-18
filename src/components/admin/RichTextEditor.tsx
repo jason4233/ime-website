@@ -53,7 +53,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           1. List
         </button>
         <button type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()} className={btnClass(editor.isActive("blockquote"))}>
-          "Quote
+          Quote
         </button>
         <div className="w-px h-5 bg-ivory/10 mx-1 self-center" />
         <button type="button" onClick={() => editor.chain().focus().undo().run()} className={btnClass(false)}>

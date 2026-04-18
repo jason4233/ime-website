@@ -5,15 +5,17 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import Masonry from "react-masonry-css";
 import { TextReveal } from "@/components/ui/TextReveal";
 
-// Placeholder 證書（之後由後台 API 提供）
+// 真實證書圖片（來自 /public/images/）
 const certificates = [
-  { id: 1, title: "INCI 國際原料登錄", issuer: "Personal Care Products Council", aspect: "4/3", imageUrl: "https://placehold.co/400x300/1a1a1a/B8953F?text=INCI%0AMono+ID+40148" },
-  { id: 2, title: "衛部醫器製字第 008446 號", issuer: "台灣衛生福利部", aspect: "3/4", imageUrl: "https://placehold.co/300x400/1a1a1a/7B2FBE?text=TFDA%0A008446" },
-  { id: 3, title: "中國發明專利 — 組織細胞裝置設備", issuer: "中國國家知識產權局", aspect: "3/4", imageUrl: "https://placehold.co/300x400/1a1a1a/D4B96A?text=CN+Patent" },
-  { id: 4, title: "中國發明專利 — 細胞分注儲存裝置", issuer: "中國國家知識產權局", aspect: "3/4", imageUrl: "https://placehold.co/300x400/1a1a1a/D4B96A?text=CN+Patent+2" },
-  { id: 5, title: "韓國發明專利 10-1793032", issuer: "Korean Intellectual Property Office", aspect: "3/4", imageUrl: "https://placehold.co/300x400/1a1a1a/9B5DD4?text=KR+Patent" },
-  { id: 6, title: "韓國發明專利 10-2242615", issuer: "Korean Intellectual Property Office", aspect: "3/4", imageUrl: "https://placehold.co/300x400/1a1a1a/9B5DD4?text=KR+Patent+2" },
-  { id: 7, title: "中國發明專利 — 細胞培養裝置", issuer: "中國國家知識產權局", aspect: "4/3", imageUrl: "https://placehold.co/400x300/1a1a1a/D4B96A?text=CN+Patent+3" },
+  { id: 1, title: "INCI 國際原料登錄 Mono ID 40148", issuer: "Personal Care Products Council", aspect: "4/3", imageUrl: "/images/660080_0.jpg" },
+  { id: 2, title: "衛部醫器製字第 008446 號", issuer: "台灣衛生福利部", aspect: "3/4", imageUrl: "/images/660174_0.jpg" },
+  { id: 3, title: "中國發明專利 — 組織細胞裝置設備", issuer: "中國國家知識產權局", aspect: "3/4", imageUrl: "/images/660083_0.jpg" },
+  { id: 4, title: "中國發明專利 — 細胞分注儲存裝置", issuer: "中國國家知識產權局", aspect: "3/4", imageUrl: "/images/660084_0.jpg" },
+  { id: 5, title: "韓國發明專利 10-1793032", issuer: "Korean Intellectual Property Office", aspect: "3/4", imageUrl: "/images/660085_0.jpg" },
+  { id: 6, title: "韓國發明專利 10-2242615", issuer: "Korean Intellectual Property Office", aspect: "3/4", imageUrl: "/images/660086_0.jpg" },
+  { id: 7, title: "中國發明專利 — 細胞培養裝置", issuer: "中國國家知識產權局", aspect: "4/3", imageUrl: "/images/660087_0.jpg" },
+  { id: 8, title: "INCI 國際原料認證附件", issuer: "Personal Care Products Council", aspect: "3/4", imageUrl: "/images/660081_0.jpg" },
+  { id: 9, title: "國際原料登錄證明", issuer: "Personal Care Products Council", aspect: "4/3", imageUrl: "/images/660082_0.jpg" },
 ];
 
 function CertCard({ cert, index, onClick }: {

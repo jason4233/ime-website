@@ -68,7 +68,7 @@ function StepNode({ step, index }: { step: typeof steps[0]; index: number }) {
 
 export function FactorySection() {
   return (
-    <section className="py-section-lg bg-[#0C0C0C] relative overflow-hidden noise-overlay">
+    <section className="py-section-lg bg-deep-forest relative overflow-hidden noise-overlay">
       <div className="absolute top-0 left-[12%] w-px h-[30vh] bg-gradient-to-b from-gold/8 to-transparent" />
 
       <div className="max-w-5xl mx-auto px-6 lg:px-12">

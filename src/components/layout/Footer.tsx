@@ -84,8 +84,16 @@ export function Footer() {
           </div>
         </div>
 
+        {/* 法規免責聲明 */}
+        <div className="border-t border-ivory/5 mt-16 pt-6 mb-6">
+          <p className="text-[0.6rem] text-ivory/20 font-body leading-relaxed">
+            <span className="text-ivory/35 font-medium">產品聲明：</span>
+            本網站內容僅供參考，不具醫療診斷、治療或療效之建議或宣稱。所載原料認證（INCI Mono ID: 40148、中韓發明專利等）係屬原料技術認證，非產品療效保證。個人使用感受及效果因膚質、生活習慣、使用方式不同而有差異，不代表所有使用者實際效果。如有皮膚不適，請諮詢專業醫師後使用。本品不得用於開放性傷口、注射或任何侵入性使用。
+          </p>
+        </div>
+
         {/* 分隔線 + Copyright */}
-        <div className="border-t border-ivory/5 mt-16 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="border-t border-ivory/5 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-[0.65rem] text-ivory/15 font-body">
             © 2026 i me｜研發：星誠細胞生醫｜製造：博訊生物科技
           </p>

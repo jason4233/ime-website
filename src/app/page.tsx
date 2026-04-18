@@ -10,14 +10,26 @@ import { FactorySection } from "@/components/sections/FactorySection";
 import { CertificateSection } from "@/components/sections/CertificateSection";
 import { NewsSection } from "@/components/sections/NewsSection";
 import { TestimonialSection } from "@/components/sections/TestimonialSection";
-import { BeforeAfterSection } from "@/components/sections/BeforeAfterSection";
 import { RecruitSection } from "@/components/sections/RecruitSection";
 import { AppointmentSection } from "@/components/sections/AppointmentSection";
+import { OrganizationJsonLd, ProductJsonLd, ServiceJsonLd, WebSiteJsonLd, FAQJsonLd } from "@/components/seo/JsonLd";
+import { getHero } from "@/lib/content";
 
-export default function Home() {
+// ISR：每 60 秒 revalidate；後台存檔時也會透過 /api/revalidate 立即刷新
+export const revalidate = 60;
+
+export default async function Home() {
+  // 目前只 wire Hero 到 DB；其他 section 保留硬編（之後依需求擴充）
+  const hero = await getHero();
+
   return (
     <>
-      <HeroSection />
+      <OrganizationJsonLd />
+      <WebSiteJsonLd />
+      <ProductJsonLd />
+      <ServiceJsonLd />
+      <FAQJsonLd />
+      <HeroSection data={hero} />
       <FirstVisitQuiz />
       <BrandStorySection />
       <FounderSection />
@@ -29,7 +41,6 @@ export default function Home() {
       <CertificateSection />
       <NewsSection />
       <TestimonialSection />
-      <BeforeAfterSection />
       <RecruitSection />
       <AppointmentSection />
     </>
