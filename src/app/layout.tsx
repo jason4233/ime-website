@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond } from "@/lib/fonts";
-// Header/Footer 暫時全拿掉 debug，純看 main children 是否仍 crash
+// Header 暫拿掉 debug，Footer 純靜態先加回
 // import { Header } from "@/components/layout/Header";
-// import { Footer } from "@/components/layout/Footer";
+import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -113,6 +113,7 @@ export default function RootLayout({
     <html lang="zh-Hant" className={fontVars} suppressHydrationWarning>
       <body className="antialiased bg-ivory text-night" suppressHydrationWarning>
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );
