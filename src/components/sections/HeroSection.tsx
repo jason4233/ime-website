@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
 // R3F GoldParticles 暫時移除（React 18 + R3F hydration 在 Vercel prod 炸 insertBefore）
@@ -67,14 +67,28 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
   const cmsSubline = data?.subheadline;
   const cmsCtaText = data?.ctaText;
   const cmsCtaLink = data?.ctaLink;
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
 
-  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.6], [0, -80]);
-  const scale = useTransform(scrollYProgress, [0, 0.6], [1, 0.95]);
+  // Parallax state — 用 native scroll 取代 Framer useScroll 避免 prod hydration MotionValue null
+  const [scrollProgress, setScrollProgress] = useState(0);
+  useEffect(() => {
+    const onScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const h = rect.height;
+      // progress: 0 = section 完整在畫面，1 = section 完全滑出
+      const p = Math.max(0, Math.min(1, -rect.top / h));
+      setScrollProgress(p);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // 線性對應（對應原本 useTransform 的 [0, 0.6] range）
+  const t = Math.min(1, scrollProgress / 0.6);
+  const opacity = 1 - t;
+  const y = -80 * t;
+  const scale = 1 - 0.05 * t;
 
   return (
     <section

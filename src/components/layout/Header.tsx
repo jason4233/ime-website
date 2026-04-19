@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useMotionValueEvent, useScroll, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/ui/Logo";
 
 const navItems = [
@@ -16,12 +16,15 @@ const navItems = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { scrollY } = useScroll();
   const pathname = usePathname();
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 60);
-  });
+  // 用 native window scroll 取代 Framer useScroll（避免 SSR hydration 時 MotionValue 還是 null 導致 .get() 崩）
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    onScroll(); // init
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // 只有首頁 Hero 未滾動時才用淺色字（Hero 背景是深色）
   // 其他頁面頂部是淺色背景 → 永遠用深色字
