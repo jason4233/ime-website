@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond } from "@/lib/fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import dynamic from "next/dynamic";
-// SmoothScroll + CustomCursor 都改 dynamic ssr:false，避免 Lenis/browser extension 注入 DOM 造成 hydration mismatch (insertBefore 錯誤)
-const SmoothScroll = dynamic(() => import("@/components/layout/SmoothScroll").then(m => m.SmoothScroll), { ssr: false });
-const CustomCursor = dynamic(() => import("@/components/ui/CustomCursor").then(m => m.CustomCursor), { ssr: false });
+// SmoothScroll + CustomCursor 暫時完全拿掉 — 排除是否為 insertBefore hydration crash 元兇
+// 穩定後再分步重新引入
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -115,10 +113,6 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant" className={fontVars} suppressHydrationWarning>
       <body className="antialiased bg-ivory text-night" suppressHydrationWarning>
-        {/* SmoothScroll 以 dynamic ssr:false 載入，SSR 階段跳過 Lenis 包裝 */}
-        <SmoothScroll>
-          <CustomCursor />
-        </SmoothScroll>
         <Header />
         <main>{children}</main>
         <Footer />
