@@ -1,15 +1,11 @@
 "use client";
 
-import { useRef, Suspense } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import dynamic from "next/dynamic";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
-// 動態載入 R3F（避免 SSR 問題）
-const GoldParticles = dynamic(
-  () => import("@/components/three/GoldParticles").then((m) => m.GoldParticles),
-  { ssr: false }
-);
+// R3F GoldParticles 暫時移除（React 18 + R3F hydration 在 Vercel prod 炸 insertBefore）
+// 用純 CSS 漸層光斑替代，視覺上仍有奢華感
 
 // 逐字動畫工具
 function AnimatedText({
@@ -111,10 +107,38 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
         <div className="absolute top-0 right-[22%] w-px h-[20vh] bg-gradient-to-b from-gold/10 to-transparent" />
       </div>
 
-      {/* R3F 粒子系統 */}
-      <Suspense fallback={null}>
-        <GoldParticles />
-      </Suspense>
+      {/* CSS 光點粒子（取代 R3F GoldParticles — 避免 Vercel prod hydration 崩潰） */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(18)].map((_, i) => {
+          const size = 2 + (i % 4);
+          const duration = 4 + (i % 5);
+          const delay = (i * 0.3) % 5;
+          return (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                left: `${(i * 53) % 100}%`,
+                top: `${(i * 37) % 100}%`,
+                width: `${size}px`,
+                height: `${size}px`,
+                background: i % 2 === 0 ? "rgba(212, 185, 106, 0.6)" : "rgba(155, 93, 212, 0.5)",
+                boxShadow: i % 2 === 0 ? "0 0 8px rgba(212, 185, 106, 0.4)" : "0 0 8px rgba(155, 93, 212, 0.3)",
+              }}
+              animate={{
+                y: [0, -30, 0],
+                opacity: [0.3, 1, 0.3],
+              }}
+              transition={{
+                duration,
+                delay,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          );
+        })}
+      </div>
 
       {/* 主內容 */}
       <motion.div
