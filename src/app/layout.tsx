@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond } from "@/lib/fonts";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-// SmoothScroll + CustomCursor 暫時完全拿掉 — 排除是否為 insertBefore hydration crash 元兇
-// 穩定後再分步重新引入
+// Header/Footer 暫時全拿掉 debug，純看 main children 是否仍 crash
+// import { Header } from "@/components/layout/Header";
+// import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -113,9 +112,7 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant" className={fontVars} suppressHydrationWarning>
       <body className="antialiased bg-ivory text-night" suppressHydrationWarning>
-        <Header />
         <main>{children}</main>
-        <Footer />
       </body>
     </html>
   );
