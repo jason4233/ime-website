@@ -2,7 +2,7 @@
 
 import { HeroSection } from "@/components/sections/HeroSection";
 import { FirstVisitQuiz } from "@/components/sections/quiz/FirstVisitQuiz";
-// import { BrandStorySection } from "@/components/sections/BrandStorySection";
+import { BrandStorySection } from "@/components/sections/BrandStorySection";
 // import { FounderSection } from "@/components/sections/FounderSection";
 
 export default function HomeClient() {
@@ -10,6 +10,7 @@ export default function HomeClient() {
     <>
       <HeroSection />
       <FirstVisitQuiz />
+      <BrandStorySection />
     </>
   );
 }
