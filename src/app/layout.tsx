@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond } from "@/lib/fonts";
 import { Header } from "@/components/layout/Header";
-// debug: 只留 Header + main，完全排除 SmoothScroll/CustomCursor/Footer
+import { Footer } from "@/components/layout/Footer";
+import dynamic from "next/dynamic";
+// SmoothScroll + CustomCursor dynamic ssr:false — Lenis/styled-jsx global 在 mount 會改 document
+const SmoothScroll = dynamic(() => import("@/components/layout/SmoothScroll").then(m => m.SmoothScroll), { ssr: false });
+const CustomCursor = dynamic(() => import("@/components/ui/CustomCursor").then(m => m.CustomCursor), { ssr: false });
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -101,8 +105,12 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant" className={fontVars} suppressHydrationWarning>
       <body className="antialiased bg-ivory text-night" suppressHydrationWarning>
+        <SmoothScroll>
+          <CustomCursor />
+        </SmoothScroll>
         <Header />
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );

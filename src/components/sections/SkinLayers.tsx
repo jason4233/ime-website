@@ -2,12 +2,8 @@
 
 import { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger);
-}
+// 已移除 GSAP ScrollTrigger pin (DOM 突變會造成 React insertBefore 崩潰)
+// 改用 CSS position:sticky + 原生 scroll progress 驅動 activeLayer
 
 // 皮膚三層 — 精緻珍珠膚色系統
 const layers = [
@@ -502,35 +498,31 @@ function LayerInfo({ layer }: { layer: LayerType }) {
 }
 
 export function SkinLayers() {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
   const [activeLayer, setActiveLayer] = useState(-1);
 
+  // 改用 CSS sticky + 原生 scroll progress (移除 GSAP pin，避免 DOM 突變)
   useEffect(() => {
-    if (!containerRef.current) return;
-    const el = containerRef.current;
-
-    const trigger = ScrollTrigger.create({
-      trigger: el,
-      start: "top top",
-      end: `+=${window.innerHeight * 3.5}`,
-      pin: true,
-      scrub: 0.6,
-      onUpdate: (self) => {
-        const p = self.progress;
-        if (p < 0.15) setActiveLayer(-1);
-        else if (p < 0.4) setActiveLayer(0);
-        else if (p < 0.65) setActiveLayer(1);
-        else setActiveLayer(2);
-      },
-    });
-
-    return () => trigger.kill();
+    const onScroll = () => {
+      const el = outerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const total = el.offsetHeight - window.innerHeight;
+      const p = Math.max(0, Math.min(1, -rect.top / total));
+      if (p < 0.15) setActiveLayer(-1);
+      else if (p < 0.4) setActiveLayer(0);
+      else if (p < 0.65) setActiveLayer(1);
+      else setActiveLayer(2);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
+    <div ref={outerRef} style={{ height: "450vh" }} className="relative">
     <section
-      ref={containerRef}
-      className="relative h-screen w-full overflow-hidden noise-overlay"
+      className="sticky top-0 h-screen w-full overflow-hidden noise-overlay"
       style={{
         background: `
           radial-gradient(ellipse 95% 70% at 50% 35%, #FFFCF8 0%, #F8EEE4 45%, #EFDCCE 100%)
@@ -711,5 +703,6 @@ export function SkinLayers() {
         keep scrolling
       </motion.p>
     </section>
+    </div>
   );
 }
