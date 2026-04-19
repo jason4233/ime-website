@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { Logo } from "@/components/ui/Logo";
 
 const navItems = [
@@ -13,21 +12,22 @@ const navItems = [
   { label: "聯繫我們", href: "/contact" },
 ];
 
+// 純 CSS/state Header — 移除 Framer Motion + AnimatePresence
+// 原因：framer-motion 的 motion.header / motion.span / AnimatePresence 在 React 18 production build
+// 疑似 triggering `insertBefore` HostRoot-level hydration crash (aZ → a7 case 3)
+// 這版用 className toggle + CSS transition 達到相同視覺效果，100% 相容 SSR
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  // 用 native window scroll 取代 Framer useScroll（避免 SSR hydration 時 MotionValue 還是 null 導致 .get() 崩）
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
-    onScroll(); // init
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // 只有首頁 Hero 未滾動時才用淺色字（Hero 背景是深色）
-  // 其他頁面頂部是淺色背景 → 永遠用深色字
   const isHome = pathname === "/";
   const onDarkHero = isHome && !scrolled;
 
@@ -36,7 +36,7 @@ export function Header() {
 
   return (
     <>
-      <motion.header
+      <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-spring ${
           onDarkHero
             ? "py-6 bg-transparent"
@@ -67,101 +67,67 @@ export function Header() {
             </Link>
           </nav>
 
-          {/* Mobile menu button */}
+          {/* Mobile menu button — pure CSS 漢堡 */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5 relative z-[60]
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-brand"
             aria-label={menuOpen ? "關閉選單" : "開啟選單"}
           >
-            <motion.span
-              animate={menuOpen ? { rotate: 45, y: 4.5 } : { rotate: 0, y: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className={`w-5 h-[1.5px] rounded-full transition-colors duration-300 ${
-                menuOpen ? "bg-ivory" : hamburgerColor
+            <span
+              className={`w-5 h-[1.5px] rounded-full transition-all duration-300 ease-spring ${
+                menuOpen ? "bg-ivory rotate-45 translate-y-[4.5px]" : `${hamburgerColor} rotate-0 translate-y-0`
               }`}
             />
-            <motion.span
-              animate={menuOpen ? { rotate: -45, y: -4.5 } : { rotate: 0, y: 0 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className={`w-5 h-[1.5px] rounded-full transition-colors duration-300 ${
-                menuOpen ? "bg-ivory" : hamburgerColor
+            <span
+              className={`w-5 h-[1.5px] rounded-full transition-all duration-300 ease-spring ${
+                menuOpen ? "bg-ivory -rotate-45 -translate-y-[4.5px]" : `${hamburgerColor} rotate-0 translate-y-0`
               }`}
             />
           </button>
         </div>
-      </motion.header>
+      </header>
 
-      {/* Fullscreen Overlay Menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-[55] bg-night/95 backdrop-blur-2xl flex flex-col items-center justify-center noise-overlay"
+      {/* Fullscreen Overlay Menu — 用 opacity/pointer-events 切換，不用 AnimatePresence */}
+      <div
+        className={`fixed inset-0 z-[55] bg-night/95 backdrop-blur-2xl flex flex-col items-center justify-center noise-overlay
+                    transition-opacity duration-400 ease-spring
+                    ${menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+      >
+        <div className="absolute top-0 left-[20%] w-px h-[30vh] bg-gradient-to-b from-gold/15 to-transparent" />
+        <div className="absolute bottom-0 right-[25%] w-px h-[20vh] bg-gradient-to-t from-gold/10 to-transparent" />
+
+        <nav className="flex flex-col items-center gap-8">
+          {navItems.map((item, i) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              className={`font-serif-tc text-h3 text-ivory/70 hover:text-ivory
+                         transition-all duration-500 ease-spring
+                         focus-visible:outline-none focus-visible:text-gold
+                         ${menuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: menuOpen ? `${100 + i * 80}ms` : "0ms" }}
+            >
+              {item.label}
+            </Link>
+          ))}
+
+          <Link
+            href="/contact"
+            onClick={() => setMenuOpen(false)}
+            className={`btn-gold text-base px-10 py-4 mt-4 transition-all duration-500 ease-spring
+                       ${menuOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+            style={{ transitionDelay: menuOpen ? `${100 + navItems.length * 80}ms` : "0ms" }}
           >
-            <div className="absolute top-0 left-[20%] w-px h-[30vh] bg-gradient-to-b from-gold/15 to-transparent" />
-            <div className="absolute bottom-0 right-[25%] w-px h-[20vh] bg-gradient-to-t from-gold/10 to-transparent" />
+            預約體驗
+          </Link>
 
-            <nav className="flex flex-col items-center gap-8">
-              {navItems.map((item, i) => (
-                <motion.div
-                  key={item.href}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{
-                    duration: 0.5,
-                    delay: 0.1 + i * 0.08,
-                    ease: [0.16, 1, 0.3, 1],
-                  }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="font-serif-tc text-h3 text-ivory/70 hover:text-ivory
-                               transition-colors duration-300
-                               focus-visible:outline-none focus-visible:text-gold"
-                  >
-                    {item.label}
-                  </Link>
-                </motion.div>
-              ))}
-
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{
-                  duration: 0.5,
-                  delay: 0.1 + navItems.length * 0.08,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="mt-4"
-              >
-                <Link
-                  href="/contact"
-                  onClick={() => setMenuOpen(false)}
-                  className="btn-gold text-base px-10 py-4"
-                >
-                  預約體驗
-                </Link>
-              </motion.div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="mt-8 font-elegant italic text-sm text-gold/40 tracking-[0.15em]"
-              >
-                Exosome Beauty for you
-              </motion.p>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <p className="mt-8 font-elegant italic text-sm text-gold/40 tracking-[0.15em]">
+            Exosome Beauty for you
+          </p>
+        </nav>
+      </div>
     </>
   );
 }
