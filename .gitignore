@@ -42,3 +42,6 @@ lighthouse-report.json
 next-env.d.ts
 
 .vercel
+
+# Local Claude Code skills (personal tooling, not project code)
+.claude/
