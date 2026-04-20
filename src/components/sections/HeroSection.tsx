@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
-// 21st.dev magicui/particles — Canvas 2D 粒子 + 滑鼠磁性牽引
-// 紫金雙層疊加：底層大粒子金色慢漂，上層小粒子紫色磁性強
-const Particles = dynamic(
-  () => import("@/components/ui/particles").then((m) => m.Particles),
+// HeroParticles — 基於 magicui/particles 延伸：加 3D 透視（遠→小）+ 滑鼠控消失點
+// 紫金混合粒子霧化往遠處飛
+const HeroParticles = dynamic(
+  () => import("@/components/ui/hero-particles").then((m) => m.HeroParticles),
   { ssr: false }
 );
 
@@ -100,27 +100,23 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       ref={containerRef}
       className="relative h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* 底層暗夜背景 */}
+      {/* 底層暗夜背景（紫黑漸層,讓粒子發光更明顯） */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0A0510] via-[#150820] to-[#0A0510] z-0" />
 
-      {/* 21st.dev magicui/particles — 紫金雙層粒子,滑鼠靠近會被牽引
-          - 底層:金色大粒子,慢速漂,磁性弱(staticity 高)
-          - 上層:紫色小粒子,快速反應,磁性強(staticity 低) */}
-      <Particles
+      {/* HeroParticles — 紫金混合粒子霧化飛向消失點
+          - 滑鼠移動 → 消失點偏移 → 粒子飛行方向改變
+          - 每顆粒子由近至遠 z 增加 → size 變小 + alpha 淡出
+          - shadowBlur 給每顆做光暈霧化 */}
+      <HeroParticles
         className="absolute inset-0 z-10"
-        quantity={120}
-        color="#B8953F"
-        size={0.6}
-        staticity={70}
-        ease={60}
-      />
-      <Particles
-        className="absolute inset-0 z-10"
-        quantity={80}
-        color="#9B5DD4"
-        size={0.3}
-        staticity={30}
-        ease={40}
+        quantity={140}
+        baseSize={2.2}
+        speed={0.006}
+        colorA="#B8953F"
+        colorB="#9B5DD4"
+        maxZ={4}
+        mouseInfluence={0.35}
+        glow={12}
       />
 
       {/* 邊緣暗角 + 底部 fade 讓下個 section 無縫接 */}
