@@ -81,13 +81,28 @@ export function ProductJsonLd() {
       { "@type": "PropertyValue", name: "標誌物", value: "CD9、CD63" },
       { "@type": "PropertyValue", name: "INCI Mono ID", value: "40148" },
       { "@type": "PropertyValue", name: "TFDA 核可", value: "衛部醫器製字第 008446 號" },
+      { "@type": "PropertyValue", name: "INCI 國際原料登錄", value: "Personal Care Products Council 認證" },
+      { "@type": "PropertyValue", name: "TFDA 醫療器材許可證", value: "台灣衛生福利部核發" },
+      { "@type": "PropertyValue", name: "中國發明專利", value: "已取得" },
+      { "@type": "PropertyValue", name: "韓國發明專利", value: "已取得" },
     ],
-    hasCertification: [
-      { "@type": "Certification", name: "INCI 國際原料登錄", issuedBy: "Personal Care Products Council" },
-      { "@type": "Certification", name: "TFDA 醫療器材許可證", issuedBy: "台灣衛生福利部" },
-      { "@type": "Certification", name: "中國發明專利" },
-      { "@type": "Certification", name: "韓國發明專利" },
-    ],
+    // Google Product rich snippet 必填:offers / review / aggregateRating 擇一
+    // B2B 原料無公開零售價 → 用 AggregateOffer 表示區間 + 預約洽談
+    // (不加假的 aggregateRating,違反 Google 結構化資料政策會被降排名)
+    offers: {
+      "@type": "AggregateOffer",
+      url: `${SITE_URL}/contact`,
+      priceCurrency: "TWD",
+      lowPrice: "3000",
+      highPrice: "30000",
+      availability: "https://schema.org/InStock",
+      offerCount: 3,
+      seller: {
+        "@type": "Organization",
+        name: "I ME",
+        url: SITE_URL,
+      },
+    },
   };
 
   return (
