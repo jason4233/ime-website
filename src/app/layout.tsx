@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond } from "@/lib/fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { ExosomeSceneLoader } from "@/components/scene/ExosomeSceneLoader";
 import dynamic from "next/dynamic";
 // SmoothScroll + CustomCursor dynamic ssr:false — Lenis/styled-jsx global 在 mount 會改 document
 const SmoothScroll = dynamic(() => import("@/components/layout/SmoothScroll").then(m => m.SmoothScroll), { ssr: false });
@@ -104,12 +105,15 @@ export default function RootLayout({
 
   return (
     <html lang="zh-Hant" className={fontVars} suppressHydrationWarning>
-      <body className="antialiased bg-ivory text-night" suppressHydrationWarning>
+      <body className="antialiased bg-night text-ivory" suppressHydrationWarning>
+        {/* 全站 3D 背景 — 外泌體光球會跟著滾動旅行 */}
+        <ExosomeSceneLoader />
+
         <SmoothScroll>
           <CustomCursor />
         </SmoothScroll>
         <Header />
-        <main>{children}</main>
+        <main className="relative z-10">{children}</main>
         <Footer />
       </body>
     </html>

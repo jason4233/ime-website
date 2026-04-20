@@ -95,63 +95,18 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       ref={containerRef}
       className="relative h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* 背景漸層：深夜黑 → 墨綠 */}
-      <div
-        className="absolute inset-0 noise-overlay"
+      {/* 透明層 — 讓背景的 ExosomeOrb 3D scene 透出來
+          只保留極淡的邊緣暗角 + 裝飾線，不遮擋 orb */}
+      <div className="absolute inset-0 pointer-events-none noise-overlay"
         style={{
           background: `
-            linear-gradient(175deg, #0A0A0A 0%, #0C100E 40%, #0F1412 100%)
+            radial-gradient(ellipse 100% 80% at 50% 50%, transparent 40%, rgba(10, 10, 10, 0.6) 100%)
           `,
         }}
       >
-        {/* 氛圍光暈 */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 50% 40% at 50% 50%, rgba(184, 149, 63, 0.05) 0%, transparent 70%),
-              radial-gradient(ellipse 45% 50% at 70% 60%, rgba(123, 47, 190, 0.04) 0%, transparent 65%),
-              radial-gradient(ellipse 60% 50% at 20% 80%, rgba(212, 168, 155, 0.02) 0%, transparent 60%),
-              radial-gradient(ellipse 40% 60% at 30% 25%, rgba(123, 47, 190, 0.03) 0%, transparent 50%)
-            `,
-          }}
-        />
         {/* 裝飾線 */}
-        <div className="absolute top-0 left-[15%] w-px h-[35vh] bg-gradient-to-b from-brand/15 to-transparent" />
-        <div className="absolute top-0 right-[22%] w-px h-[20vh] bg-gradient-to-b from-gold/10 to-transparent" />
-      </div>
-
-      {/* CSS 光點粒子（取代 R3F GoldParticles — 避免 Vercel prod hydration 崩潰） */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(18)].map((_, i) => {
-          const size = 2 + (i % 4);
-          const duration = 4 + (i % 5);
-          const delay = (i * 0.3) % 5;
-          return (
-            <motion.div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                left: `${(i * 53) % 100}%`,
-                top: `${(i * 37) % 100}%`,
-                width: `${size}px`,
-                height: `${size}px`,
-                background: i % 2 === 0 ? "rgba(212, 185, 106, 0.6)" : "rgba(155, 93, 212, 0.5)",
-                boxShadow: i % 2 === 0 ? "0 0 8px rgba(212, 185, 106, 0.4)" : "0 0 8px rgba(155, 93, 212, 0.3)",
-              }}
-              animate={{
-                y: [0, -30, 0],
-                opacity: [0.3, 1, 0.3],
-              }}
-              transition={{
-                duration,
-                delay,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          );
-        })}
+        <div className="absolute top-0 left-[15%] w-px h-[35vh] bg-gradient-to-b from-brand/20 to-transparent" />
+        <div className="absolute top-0 right-[22%] w-px h-[20vh] bg-gradient-to-b from-gold/15 to-transparent" />
       </div>
 
       {/* 主內容 */}
@@ -236,8 +191,8 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
         </div>
       </motion.div>
 
-      {/* 底部漸層過渡到 ivory */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-ivory to-transparent z-20" />
+      {/* 底部漸層 fade 到透明，下一個 section 自己處理背景 */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-night/80 to-transparent z-20 pointer-events-none" />
 
       {/* 滾動指示 — 豎線 + 小點 */}
       <motion.div
