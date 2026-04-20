@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // TODO: 取得 Google Search Console 驗證碼後填入
+    google: "7euGE1z9iYpDigLuxrMB2fudR8oZdcS82YeQRgLPF-k",
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app"),
   formatDetection: {
