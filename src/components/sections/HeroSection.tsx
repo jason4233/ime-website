@@ -5,11 +5,10 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
-// 21st.dev Digital Petals Shader (dhiluxui) — WebGL shader with mouse interaction
-// 滑鼠移動會觸發花瓣 bloom ripple 效果
-// dynamic(ssr:false) 避免 WebGL SSR hydration 問題
-const DigitalPetalsShader = dynamic(
-  () => import("@/components/ui/digital-petals-shader"),
+// 21st.dev magicui/particles — Canvas 2D 粒子 + 滑鼠磁性牽引
+// 紫金雙層疊加：底層大粒子金色慢漂，上層小粒子紫色磁性強
+const Particles = dynamic(
+  () => import("@/components/ui/particles").then((m) => m.Particles),
   { ssr: false }
 );
 
@@ -101,9 +100,28 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       ref={containerRef}
       className="relative h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* 21st.dev Digital Petals Shader (with mouse interaction)
-          滑鼠移動會讓花瓣發光漣漪,元件內建 position:fixed + zIndex:-1 */}
-      <DigitalPetalsShader />
+      {/* 底層暗夜背景 */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0A0510] via-[#150820] to-[#0A0510] z-0" />
+
+      {/* 21st.dev magicui/particles — 紫金雙層粒子,滑鼠靠近會被牽引
+          - 底層:金色大粒子,慢速漂,磁性弱(staticity 高)
+          - 上層:紫色小粒子,快速反應,磁性強(staticity 低) */}
+      <Particles
+        className="absolute inset-0 z-10"
+        quantity={120}
+        color="#B8953F"
+        size={0.6}
+        staticity={70}
+        ease={60}
+      />
+      <Particles
+        className="absolute inset-0 z-10"
+        quantity={80}
+        color="#9B5DD4"
+        size={0.3}
+        staticity={30}
+        ease={40}
+      />
 
       {/* 邊緣暗角 + 底部 fade 讓下個 section 無縫接 */}
       <div className="absolute inset-0 pointer-events-none z-0"
