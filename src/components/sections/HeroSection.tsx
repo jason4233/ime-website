@@ -109,14 +109,14 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
           - shadowBlur 給每顆做光暈霧化 */}
       <HeroParticles
         className="absolute inset-0 z-10"
-        quantity={140}
-        baseSize={2.2}
-        speed={0.006}
-        colorA="#B8953F"
+        quantity={60}
+        baseSize={5.5}
+        speed={0.005}
+        colorA="#D4B36A"
         colorB="#9B5DD4"
-        maxZ={4}
-        mouseInfluence={0.35}
-        glow={12}
+        maxZ={3.5}
+        mouseInfluence={0.4}
+        glow={28}
       />
 
       {/* 邊緣暗角 + 底部 fade 讓下個 section 無縫接 */}
