@@ -5,10 +5,11 @@ import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
-// 21st.dev Celestial Bloom Shader (dhiluxui) — 專業 WebGL shader 當 Hero 背景
+// 21st.dev Digital Petals Shader (dhiluxui) — WebGL shader with mouse interaction
+// 滑鼠移動會觸發花瓣 bloom ripple 效果
 // dynamic(ssr:false) 避免 WebGL SSR hydration 問題
-const CelestialBloomShader = dynamic(
-  () => import("@/components/ui/celestial-bloom-shader"),
+const DigitalPetalsShader = dynamic(
+  () => import("@/components/ui/digital-petals-shader"),
   { ssr: false }
 );
 
@@ -100,9 +101,9 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       ref={containerRef}
       className="relative h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* 21st.dev Celestial Bloom Shader 取代原金光粒子
-          元件內建 position:fixed + zIndex:-1,會以全視窗大小鋪在 Hero 背景 */}
-      <CelestialBloomShader />
+      {/* 21st.dev Digital Petals Shader (with mouse interaction)
+          滑鼠移動會讓花瓣發光漣漪,元件內建 position:fixed + zIndex:-1 */}
+      <DigitalPetalsShader />
 
       {/* 邊緣暗角 + 底部 fade 讓下個 section 無縫接 */}
       <div className="absolute inset-0 pointer-events-none z-0"
