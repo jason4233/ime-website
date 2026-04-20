@@ -26,15 +26,15 @@ export const metadata: Metadata = {
     "泌容術", "泌容", "外泌體療程",
     "台中榮總", "楊孟寅醫師", "星和診所",
   ],
-  authors: [{ name: "I ME", url: "https://ime-beauty.com" }],
+  authors: [{ name: "I ME", url: process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app" }],
   creator: "I ME × StellarCell BioMedicine × Dr.SIGNAL",
   publisher: "I ME",
   category: "beauty, biotech, cosmetics",
   alternates: {
-    canonical: "https://ime-beauty.com",
+    canonical: process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
     languages: {
-      "zh-TW": "https://ime-beauty.com",
-      "zh-Hant": "https://ime-beauty.com",
+      "zh-TW": process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
+      "zh-Hant": process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
     },
   },
   openGraph: {
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: "I ME",
     locale: "zh_TW",
     type: "website",
-    url: "https://ime-beauty.com",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
     images: [
       {
         url: "/images/42707_0.jpg",
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
   verification: {
     // TODO: 取得 Google Search Console 驗證碼後填入
   },
-  metadataBase: new URL("https://ime-beauty.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app"),
   formatDetection: {
     email: false,
     address: false,

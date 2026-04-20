@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-url";
 import { ProductsPageClient } from "./ProductsPageClient";
 
 export const metadata: Metadata = {
@@ -14,11 +15,11 @@ export const metadata: Metadata = {
     "3A-GTP", "CDMO", "臍帶間質幹細胞", "UC-MSC",
     "台中榮總", "楊孟寅醫師", "外泌體專利",
   ],
-  alternates: { canonical: "https://ime-beauty.com/products" },
+  alternates: { canonical: `${SITE_URL}/products` },
   openGraph: {
     title: "核心技術 — 外泌體凍晶 USC-E | I ME",
     description: "每 1mL 2,000 億顆外泌體。INCI、TFDA、中韓專利認證。台中榮總楊孟寅醫師專利技術。",
-    url: "https://ime-beauty.com/products",
+    url: `${SITE_URL}/products`,
     images: ["/images/42706_0.jpg"],
   },
 };

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-url";
 import { ContactPageClient } from "./ContactPageClient";
 
 export const metadata: Metadata = {
@@ -10,11 +11,11 @@ export const metadata: Metadata = {
     "泌容術預約", "新美業加盟", "I ME 台北", "I ME 台中", "I ME 高雄",
     "周沫璃", "Louis Shieh", "林于喬", "邱婕玲", "黃揚仁",
   ],
-  alternates: { canonical: "https://ime-beauty.com/contact" },
+  alternates: { canonical: `${SITE_URL}/contact` },
   openGraph: {
     title: "聯繫 I ME — 預約體驗 · 加盟諮詢",
     description: "台北、台中、高雄三地據點。預約泌容術體驗、加盟代理、新美業培訓。",
-    url: "https://ime-beauty.com/contact",
+    url: `${SITE_URL}/contact`,
     images: ["/images/653614_0.jpg"],
   },
 };

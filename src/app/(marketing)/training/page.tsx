@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-url";
 import { TrainingPageClient } from "./TrainingPageClient";
 
 export const metadata: Metadata = {
@@ -11,11 +12,11 @@ export const metadata: Metadata = {
     "I ME 培訓", "I ME 認證", "外泌體療程培訓", "創始總代理",
     "煥膚培訓", "抗老培訓", "美容開業", "美業加盟",
   ],
-  alternates: { canonical: "https://ime-beauty.com/training" },
+  alternates: { canonical: `${SITE_URL}/training` },
   openGraph: {
     title: "新美業培訓 — 泌容術認證班 | I ME",
-    description: "新美業養成：泌容術認證培訓，CDMO 原料 × 一對一指導，結業可接案。",
-    url: "https://ime-beauty.com/training",
+    description: "新美業養成:泌容術認證培訓,CDMO 原料 × 一對一指導,結業可接案。",
+    url: `${SITE_URL}/training`,
     images: ["/images/663112_0.jpg"],
   },
 };

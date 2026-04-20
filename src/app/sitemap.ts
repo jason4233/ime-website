@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
 
+// 用 env var 控制 — 買 domain 後只要改 vercel 環境變數 NEXT_PUBLIC_SITE_URL
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://ime-beauty.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app";
 
   return [
     { url: baseUrl, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
