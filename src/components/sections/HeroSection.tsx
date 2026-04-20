@@ -2,10 +2,15 @@
 
 import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 
-// R3F GoldParticles 暫時移除（React 18 + R3F hydration 在 Vercel prod 炸 insertBefore）
-// 用純 CSS 漸層光斑替代，視覺上仍有奢華感
+// 21st.dev Celestial Bloom Shader (dhiluxui) — 專業 WebGL shader 當 Hero 背景
+// dynamic(ssr:false) 避免 WebGL SSR hydration 問題
+const CelestialBloomShader = dynamic(
+  () => import("@/components/ui/celestial-bloom-shader"),
+  { ssr: false }
+);
 
 // 逐字動畫工具
 function AnimatedText({
@@ -95,63 +100,21 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       ref={containerRef}
       className="relative h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* 背景漸層：深夜黑 → 墨綠 */}
-      <div
-        className="absolute inset-0 noise-overlay"
+      {/* 21st.dev Celestial Bloom Shader 取代原金光粒子
+          元件內建 position:fixed + zIndex:-1,會以全視窗大小鋪在 Hero 背景 */}
+      <CelestialBloomShader />
+
+      {/* 邊緣暗角 + 底部 fade 讓下個 section 無縫接 */}
+      <div className="absolute inset-0 pointer-events-none z-0"
         style={{
           background: `
-            linear-gradient(175deg, #0A0A0A 0%, #0C100E 40%, #0F1412 100%)
+            radial-gradient(ellipse 100% 80% at 50% 50%, transparent 35%, rgba(10, 5, 20, 0.5) 100%)
           `,
         }}
       >
-        {/* 氛圍光暈 */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 50% 40% at 50% 50%, rgba(184, 149, 63, 0.05) 0%, transparent 70%),
-              radial-gradient(ellipse 45% 50% at 70% 60%, rgba(123, 47, 190, 0.04) 0%, transparent 65%),
-              radial-gradient(ellipse 60% 50% at 20% 80%, rgba(212, 168, 155, 0.02) 0%, transparent 60%),
-              radial-gradient(ellipse 40% 60% at 30% 25%, rgba(123, 47, 190, 0.03) 0%, transparent 50%)
-            `,
-          }}
-        />
         {/* 裝飾線 */}
-        <div className="absolute top-0 left-[15%] w-px h-[35vh] bg-gradient-to-b from-brand/15 to-transparent" />
-        <div className="absolute top-0 right-[22%] w-px h-[20vh] bg-gradient-to-b from-gold/10 to-transparent" />
-      </div>
-
-      {/* CSS 光點粒子（取代 R3F GoldParticles — 避免 Vercel prod hydration 崩潰） */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(18)].map((_, i) => {
-          const size = 2 + (i % 4);
-          const duration = 4 + (i % 5);
-          const delay = (i * 0.3) % 5;
-          return (
-            <motion.div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                left: `${(i * 53) % 100}%`,
-                top: `${(i * 37) % 100}%`,
-                width: `${size}px`,
-                height: `${size}px`,
-                background: i % 2 === 0 ? "rgba(212, 185, 106, 0.6)" : "rgba(155, 93, 212, 0.5)",
-                boxShadow: i % 2 === 0 ? "0 0 8px rgba(212, 185, 106, 0.4)" : "0 0 8px rgba(155, 93, 212, 0.3)",
-              }}
-              animate={{
-                y: [0, -30, 0],
-                opacity: [0.3, 1, 0.3],
-              }}
-              transition={{
-                duration,
-                delay,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          );
-        })}
+        <div className="absolute top-0 left-[15%] w-px h-[35vh] bg-gradient-to-b from-brand/25 to-transparent" />
+        <div className="absolute top-0 right-[22%] w-px h-[20vh] bg-gradient-to-b from-gold/20 to-transparent" />
       </div>
 
       {/* 主內容 */}
