@@ -45,3 +45,40 @@ next-env.d.ts
 
 # Local Claude Code skills (personal tooling, not project code)
 .claude/
+
+# Remotion project node_modules + render output (brand-videos/.gitignore handles sub-scope)
+brand-videos/node_modules/
+brand-videos/out/
+brand-videos/.remotion/
+
+# skills CLI installs — per-agent symlink directories (rebuild via `npx skills experimental_install`)
+.agents/
+.adal/
+.augment/
+.bob/
+.codebuddy/
+.commandcode/
+.continue/
+.cortex/
+.crush/
+.factory/
+.goose/
+.iflow/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.vibe/
+.windsurf/
+.zencoder/
+/skills/

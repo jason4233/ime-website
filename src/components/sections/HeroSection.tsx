@@ -103,6 +103,21 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       {/* 底層暗夜背景（紫黑漸層,讓粒子發光更明顯） */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0A0510] via-[#150820] to-[#0A0510] z-0" />
 
+      {/* 電影感底層 — Remotion 出的 6 秒 seamless loop
+          紫色星雲呼吸 + 遠處金霧 + 金絲筆觸 + 金塵飄浮 + vignette
+          mix-blend-mode: screen 讓金絲紫霧「加亮」疊到 gradient 上，不覆蓋底色 */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+        src="/videos/hero-ambient.mp4"
+        className="absolute inset-0 w-full h-full object-cover z-[1] pointer-events-none"
+        style={{ mixBlendMode: "screen", opacity: 0.82 }}
+      />
+
       {/* HeroParticles — 紫金混合粒子霧化飛向消失點
           - 滑鼠移動 → 消失點偏移 → 粒子飛行方向改變
           - 每顆粒子由近至遠 z 增加 → size 變小 + alpha 淡出
