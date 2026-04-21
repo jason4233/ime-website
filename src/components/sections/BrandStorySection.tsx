@@ -1,18 +1,31 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { MirrorIllustration, CellMessengerIllustration, BloomIllustration } from "./brand-story/StoryIllustration";
 
-// 改版：移除 GSAP ScrollTrigger + pin (它會偷改 DOM 導致 React insertBefore 崩潰)
-// 改用 CSS position:sticky 達到相同「滾動時 hero 文字停留」效果
-// activeAct 用 native scroll progress 驅動
+// 改版：836 行 SVG 「假手繪小王子」已退役
+// 現在用 FLUX 生成的真水彩插畫（Saint-Exupéry 風格 × 女性主角）
+// 三張圖同時 keep 在 DOM 中，用 opacity 做 cross-fade，切換瞬間零閃爍
+// Ken Burns（緩慢縮放平移）讓靜態圖也呼吸
 
-const illustrations = [MirrorIllustration, CellMessengerIllustration, BloomIllustration];
+type Act = {
+  id: number;
+  image: string;
+  alt: string;
+  bg: string;
+  textColor: string;
+  subColor: string;
+  lineColor: string;
+  title: string;
+  body: string;
+};
 
-const acts = [
+const acts: Act[] = [
   {
     id: 0,
+    image: "/images/story/act1-mirror.jpg",
+    alt: "水彩手繪插畫：東方女性獨自站在小星球上，望向前方的星空",
     bg: "bg-deep-purple",
     textColor: "text-ivory",
     subColor: "text-ivory/40",
@@ -24,6 +37,8 @@ const acts = [
   },
   {
     id: 1,
+    image: "/images/story/act2-messenger.jpg",
+    alt: "水彩手繪插畫：東方女性披著金色斗篷，伸手送出金色光點到遠方紫色星球",
     bg: "bg-cream-warm",
     textColor: "text-night",
     subColor: "text-night/50",
@@ -36,6 +51,8 @@ const acts = [
   },
   {
     id: 2,
+    image: "/images/story/act3-bloom.jpg",
+    alt: "水彩手繪插畫：東方女性張開雙手擁抱金色晨光，周圍紫色花朵盛開",
     bg: "bg-cream-rose",
     textColor: "text-night",
     subColor: "text-night/50",
@@ -57,7 +74,6 @@ export function BrandStorySection() {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const total = el.offsetHeight - window.innerHeight;
-      // progress: 0 -> 1 從 section 進入頂部到完全滑出
       const raw = Math.max(0, Math.min(1, -rect.top / total));
       if (raw < 0.33) setActiveAct(0);
       else if (raw < 0.66) setActiveAct(1);
@@ -71,11 +87,9 @@ export function BrandStorySection() {
   const act = acts[activeAct];
 
   return (
-    // 外層給 3 screen 高度，製造滾動距離
     <div ref={outerRef} style={{ height: "300vh" }} className="relative">
-      {/* 黏著在視窗內 — sticky 取代 GSAP pin */}
       <section className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* 背景色過渡 */}
+        {/* 背景色 cross-fade */}
         {acts.map((a) => (
           <motion.div
             key={a.id}
@@ -107,7 +121,7 @@ export function BrandStorySection() {
         {/* 內容 */}
         <div className="relative z-10 h-full flex items-center justify-center px-6">
           <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            {/* 左：文字 */}
+            {/* 左：文字（保持原本 AnimatePresence 切換） */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={`text-${activeAct}`}
@@ -138,23 +152,71 @@ export function BrandStorySection() {
               </motion.div>
             </AnimatePresence>
 
-            {/* 右：插畫 */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`illu-${activeAct}`}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center justify-center order-1 lg:order-2
-                           h-[280px] md:h-[360px] lg:h-[450px] max-w-md mx-auto"
-              >
-                {(() => {
-                  const Component = illustrations[activeAct];
-                  return <Component />;
-                })()}
-              </motion.div>
-            </AnimatePresence>
+            {/* 右：水彩插畫 —— 三張圖全部 render，opacity 切換（瀏覽器快取 → 零閃爍） */}
+            <div className="relative order-1 lg:order-2 mx-auto w-full max-w-md
+                            h-[280px] md:h-[360px] lg:h-[450px]
+                            rounded-[2rem] overflow-hidden
+                            shadow-[0_30px_60px_-20px_rgba(70,30,120,0.35)]">
+              {acts.map((a, i) => (
+                <motion.div
+                  key={a.id}
+                  initial={false}
+                  animate={{
+                    opacity: activeAct === a.id ? 1 : 0,
+                    scale: activeAct === a.id ? 1.0 : 1.04,
+                  }}
+                  transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute inset-0"
+                >
+                  {/* Ken Burns 緩慢呼吸（只對 active 圖啟用，省資源） */}
+                  <motion.div
+                    className="relative w-full h-full"
+                    animate={
+                      activeAct === a.id
+                        ? { scale: [1, 1.045, 1] }
+                        : { scale: 1 }
+                    }
+                    transition={{
+                      duration: 12,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <Image
+                      src={a.image}
+                      alt={a.alt}
+                      fill
+                      sizes="(max-width: 768px) 90vw, (max-width: 1024px) 50vw, 448px"
+                      priority={i === 0}
+                      className="object-cover"
+                      quality={85}
+                    />
+                  </motion.div>
+
+                  {/* 紙質暖光 overlay — 讓圖跟各 act 的 bg 色融合 */}
+                  <div
+                    className="absolute inset-0 pointer-events-none mix-blend-soft-light opacity-40"
+                    style={{
+                      background:
+                        i === 0
+                          ? "linear-gradient(180deg, rgba(155,93,212,0.12) 0%, transparent 50%, rgba(30,10,50,0.2) 100%)"
+                          : i === 1
+                          ? "linear-gradient(180deg, rgba(245,220,180,0.15) 0%, transparent 50%, rgba(180,130,80,0.15) 100%)"
+                          : "linear-gradient(180deg, rgba(245,200,200,0.15) 0%, transparent 50%, rgba(180,100,120,0.15) 100%)",
+                    }}
+                  />
+
+                  {/* 邊緣漸暗 vignette */}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse 120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.18) 100%)",
+                    }}
+                  />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
