@@ -109,8 +109,18 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       {/* 底層暗夜背景（紫黑漸層,讓粒子發光更明顯） */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0A0510] via-[#150820] to-[#0A0510] z-0" />
 
-      {/* 🌊 WebGL 紫金水彩流體 — 大型主視覺底層（全螢幕、滑鼠吸引、scroll 變色溫） */}
-      <HeroFluidShader className="absolute inset-0 w-full h-full z-[1] pointer-events-none opacity-85" />
+      {/* 🌊 WebGL 紫金水彩流體 — 大型主視覺底層（全螢幕、滑鼠吸引、scroll 變色溫）
+          opacity 壓到 45% + 中央放射狀暗化，讓文字在中央有可讀安全區 */}
+      <HeroFluidShader className="absolute inset-0 w-full h-full z-[1] pointer-events-none opacity-45" />
+
+      {/* 中央可讀性保護層 — 放射暗光，中央特別暗讓白字對比足夠 */}
+      <div
+        className="absolute inset-0 z-[2] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(10, 5, 20, 0.55) 0%, rgba(10, 5, 20, 0.25) 55%, transparent 100%)",
+        }}
+      />
 
       {/* 電影感底層 — Remotion 出的 6 秒 seamless loop
           紫色星雲呼吸 + 遠處金霧 + 金絲筆觸 + 金塵飄浮 + vignette
