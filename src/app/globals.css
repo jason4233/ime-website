@@ -194,4 +194,88 @@
   .animate-ping-slow {
     animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
+
+  /* ═══════════════════════════════════════════════════
+     WatercolorWalkingGirl — 真實走路關節動畫
+     週期 1.2s（跟真人走路節拍接近）
+     前後腿/前後手臂相位反向 → 對稱擺動
+     body-bob 週期減半（0.6s 一個 bob）→ 每步伐一次起伏
+     ═══════════════════════════════════════════════════ */
+  @keyframes wcgirl-leg-front {
+    0%,
+    100% {
+      transform: rotate(-22deg);
+    }
+    50% {
+      transform: rotate(22deg);
+    }
+  }
+  @keyframes wcgirl-leg-back {
+    0%,
+    100% {
+      transform: rotate(22deg);
+    }
+    50% {
+      transform: rotate(-22deg);
+    }
+  }
+  @keyframes wcgirl-arm-front {
+    0%,
+    100% {
+      transform: rotate(18deg);
+    }
+    50% {
+      transform: rotate(-18deg);
+    }
+  }
+  @keyframes wcgirl-arm-back {
+    0%,
+    100% {
+      transform: rotate(-18deg);
+    }
+    50% {
+      transform: rotate(18deg);
+    }
+  }
+  @keyframes wcgirl-bob {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    25%,
+    75% {
+      transform: translateY(-3px);
+    }
+    50% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes wcgirl-hair-sway {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    50% {
+      transform: rotate(5deg);
+    }
+  }
+
+  .wcgirl-leg-front {
+    animation: wcgirl-leg-front 1.2s ease-in-out infinite;
+  }
+  .wcgirl-leg-back {
+    animation: wcgirl-leg-back 1.2s ease-in-out infinite;
+  }
+  .wcgirl-arm-front {
+    animation: wcgirl-arm-front 1.2s ease-in-out infinite;
+  }
+  .wcgirl-arm-back {
+    animation: wcgirl-arm-back 1.2s ease-in-out infinite;
+  }
+  .wcgirl-bob {
+    animation: wcgirl-bob 1.2s ease-in-out infinite;
+  }
+  .wcgirl-hair-sway {
+    animation: wcgirl-hair-sway 1.2s ease-in-out infinite;
+  }
 }

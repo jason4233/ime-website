@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { WatercolorWalkingGirl } from "@/components/ui/WatercolorWalkingGirl";
 
 // ═══════════════════════════════════════════════════════════════
 //   Pilgrim's Passage — 朝聖者漫遊層
@@ -99,66 +99,42 @@ export function BrandStorySection() {
 
         {/* ─── Layer 5: Pilgrim's Passage 漫遊剪影（背景永恆行走） ─── */}
         <div className="absolute inset-0 z-[5] pointer-events-none overflow-hidden">
-          {/* Walker Purple — 前景、由右走向左、紫長裙 */}
+          {/* Walker Purple — SVG 關節走路（真的腳在動），由右走向左 */}
           <motion.div
-            className="absolute bottom-0 h-[72%] aspect-[627/940] will-change-transform"
+            className="absolute bottom-0 h-[72%] aspect-[2/4.5] will-change-transform"
             initial={{ x: "100vw" }}
-            animate={{
-              x: ["100vw", "-45vw"],
-              y: [0, -3, 0, 3, 0, -3, 0, 3, 0],
-              rotate: [-0.6, 0.6, -0.6, 0.6, -0.6],
-            }}
+            animate={{ x: ["100vw", "-30vw"] }}
             transition={{
-              x: { duration: 48, repeat: Infinity, ease: "linear" },
-              y: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
-              rotate: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
+              x: { duration: 42, repeat: Infinity, ease: "linear" },
             }}
             style={{
-              opacity: activeAct === 0 ? 0.28 : 0.22,
+              opacity: activeAct === 0 ? 0.32 : 0.26,
               mixBlendMode: activeAct === 0 ? "screen" : "multiply",
-              filter: "saturate(0.85)",
+              filter: "saturate(0.88)",
             }}
           >
-            <Image
-              src="/images/story/walker-purple.jpg"
-              alt=""
-              fill
-              sizes="(max-width: 768px) 50vw, 30vw"
-              className="object-contain"
-              quality={80}
-              aria-hidden="true"
+            <WatercolorWalkingGirl
+              variant="purple"
+              className="w-full h-full"
             />
           </motion.div>
 
-          {/* Walker Gold — 後景、由左走向右、金斗篷、更淡更慢 */}
+          {/* Walker Gold — 後景、由左走向右、金斗篷、更淡更慢（鏡射面向右）*/}
           <motion.div
-            className="absolute bottom-[6%] h-[55%] aspect-[627/940] will-change-transform"
-            initial={{ x: "-45vw" }}
-            animate={{
-              x: ["-45vw", "100vw"],
-              y: [0, -2, 0, 2, 0, -2, 0, 2, 0],
-              rotate: [0.5, -0.5, 0.5, -0.5, 0.5],
-            }}
+            className="absolute bottom-[6%] h-[55%] aspect-[2/4.5] will-change-transform"
+            initial={{ x: "-30vw" }}
+            animate={{ x: ["-30vw", "100vw"] }}
             transition={{
-              x: { duration: 68, repeat: Infinity, ease: "linear", delay: 12 },
-              y: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
-              rotate: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
+              x: { duration: 60, repeat: Infinity, ease: "linear", delay: 10 },
             }}
             style={{
-              opacity: activeAct === 0 ? 0.18 : 0.14,
+              opacity: activeAct === 0 ? 0.2 : 0.16,
               mixBlendMode: activeAct === 0 ? "screen" : "multiply",
-              filter: "saturate(0.8) blur(0.3px)",
+              filter: "saturate(0.85) blur(0.3px)",
+              transform: "scaleX(-1)", // 鏡射讓她面向右走
             }}
           >
-            <Image
-              src="/images/story/walker-gold.jpg"
-              alt=""
-              fill
-              sizes="(max-width: 768px) 40vw, 22vw"
-              className="object-contain"
-              quality={80}
-              aria-hidden="true"
-            />
+            <WatercolorWalkingGirl variant="gold" className="w-full h-full" />
           </motion.div>
         </div>
 
