@@ -1,23 +1,35 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { HeroV3 } from "./HeroV3";
 import { BrandStoryV3 } from "./BrandStoryV3";
+import { SkinLayersV3 } from "./SkinLayersV3";
+import { ProductV3 } from "./ProductV3";
+import { CertificateV3 } from "./CertificateV3";
+import { FounderV3 } from "./FounderV3";
+import { BeforeAfterV3 } from "./BeforeAfterV3";
+import { TestimonialV3 } from "./TestimonialV3";
+import { AppointmentV3 } from "./AppointmentV3";
 import { SectionDivider } from "./SectionDivider";
-import { motion } from "framer-motion";
 
 // ═══════════════════════════════════════════════════════════════
-//   V3 — Oriental Atelier Homepage
-//   "Sulwhasoo 人蔘暖意 + Tatcha 宣紙寧靜 + Whoo 朱砂印 + 台灣藥鋪卷軸"
+//   V3 — Oriental Atelier Homepage (complete)
 //
-//   目前已完成：Hero / SectionDivider / BrandStory
-//   下一批：SkinLayers / Product (Living Vial 3D) / Certificate / Founder /
-//         BeforeAfter / Testimonial / Appointment
+//   敘事弧 (10 幕 + 終幕):
+//     壹 · 品牌故事       察覺 → 相遇 → 選擇
+//     肆 · 皮膚解剖       表皮 / 真皮 / 皮下屏障
+//     伍 · 產品封瓶       USC-E / SiUPi POWDER (Living Vial)
+//     陸 · 印章牆         INCI / TFDA / 中韓專利
+//     柒 · 工坊           CEO Moli Chou + 團隊
+//     捌 · 見證           Before / After 拖曳 + 數據
+//     玖 · 耳語           用戶見證 crossfade
+//     拾 · 邀請           我想預約
 // ═══════════════════════════════════════════════════════════════
 
 export default function V3Client() {
   return (
     <main className="relative">
-      {/* Version Badge — 右上角標記 */}
+      {/* Version badge */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -31,127 +43,68 @@ export default function V3Client() {
       {/* 1. Hero */}
       <HeroV3 />
 
-      {/* Divider: 朱砂印章「相遇」 */}
-      <SectionDivider
-        variant="seal"
-        sealChar="遇"
-        whisper="the first chapter"
-        chapter="壹 · 品牌故事"
-      />
+      {/* Divider · 壹 相遇 */}
+      <SectionDivider variant="seal" sealChar="遇" whisper="the first chapter" chapter="壹 · 品牌故事" />
 
       {/* 2. BrandStory */}
       <BrandStoryV3 />
 
-      {/* Divider: 金墨水滴 */}
-      <SectionDivider variant="goldDrop" whisper="to be continued" />
+      {/* Divider · 知識 */}
+      <SectionDivider variant="goldDrop" whisper="in the skin's quiet architecture" chapter="肆 · 皮膚解剖" />
 
-      {/* Placeholder — 其他 section 下一批建置 */}
-      <section className="relative bg-paper-warm paper-texture py-32 px-8">
-        <div className="relative z-10 max-w-3xl mx-auto text-center space-y-8">
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            viewport={{ once: true }}
-            className="font-elegant italic text-ink/45 text-sm tracking-[0.45em] uppercase"
-          >
-            the atelier is still being built
-          </motion.p>
+      {/* 3. SkinLayers */}
+      <SkinLayersV3 />
 
-          <motion.h3
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            viewport={{ once: true }}
-            className="font-serif-tc text-[clamp(1.6rem,3.5vw,2.6rem)] leading-relaxed text-ink font-medium"
-          >
-            接下來七幕仍在工坊裡,
-            <br />
-            細細打磨。
-          </motion.h3>
+      {/* Divider · 科學 */}
+      <SectionDivider variant="brush" whisper="bottled, measured, certified" chapter="伍 · 產品封瓶" tone="dark" />
 
-          <motion.div
-            initial={{ scaleX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            viewport={{ once: true }}
-            className="w-24 h-px bg-leaf-gold mx-auto origin-center"
-          />
+      {/* 4. Product — Living Vial */}
+      <ProductV3 />
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.55 }}
-            viewport={{ once: true }}
-            className="font-sans-tc font-light text-ink/65 text-[0.95rem] leading-[2] max-w-xl mx-auto"
-          >
-            肌膚層解剖 · 產品封瓶 · 認證印章 · 工坊團隊
-            <br />
-            療程見證 · 用戶耳語 · 預約邀請函
-          </motion.p>
+      {/* Divider · 印章 */}
+      <SectionDivider variant="seal" sealChar="證" whisper="stamped by institutions" chapter="陸 · 印章牆" />
 
-          {/* 主 CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.75, ease: [0.16, 1, 0.3, 1] }}
-            viewport={{ once: true }}
-            className="pt-8"
-          >
-            <a
-              href="/contact"
-              className="group relative inline-flex items-center gap-3 px-10 py-4 bg-vermillion text-paper-cream font-serif-tc text-base tracking-[0.32em] hover:bg-vermillion-dark transition-colors duration-500 shadow-[0_4px_28px_-4px_rgba(184,50,44,0.5)]"
-              style={{ borderRadius: "2px" }}
-            >
-              <span className="relative z-10">我想預約</span>
-              <svg
-                className="w-4 h-4 relative z-10 transition-transform duration-500 group-hover:translate-x-1.5"
-                viewBox="0 0 16 16"
-                fill="none"
-              >
-                <path
-                  d="M1 8h13M10 4l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span
-                aria-hidden
-                className="absolute inset-[3px] border border-leaf-gold/35 pointer-events-none"
-                style={{ borderRadius: "1px" }}
-              />
-            </a>
-          </motion.div>
+      {/* 5. Certificate */}
+      <CertificateV3 />
 
-          {/* Compare-with-v2 link */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1 }}
-            viewport={{ once: true }}
-            className="pt-8 text-ink/30 font-elegant italic text-xs tracking-wider"
-          >
-            <a href="/" className="hover:text-vermillion transition-colors duration-500 border-b border-transparent hover:border-vermillion/40 pb-1">
-              ← 比較舊版本(/)
-            </a>
-          </motion.p>
-        </div>
-      </section>
+      {/* Divider · 人 */}
+      <SectionDivider variant="goldDrop" whisper="the hands behind the formula" chapter="柒 · 工坊" />
 
-      {/* 底部落款 */}
+      {/* 6. Founder */}
+      <FounderV3 />
+
+      {/* Divider · 見證 */}
+      <SectionDivider variant="brush" whisper="proof, drawn on skin" chapter="捌 · 見證" tone="dark" />
+
+      {/* 7. Before / After */}
+      <BeforeAfterV3 />
+
+      {/* Divider · 耳語 */}
+      <SectionDivider variant="seal" sealChar="聆" whisper="voices from the journey" chapter="玖 · 耳語" />
+
+      {/* 8. Testimonial */}
+      <TestimonialV3 />
+
+      {/* Divider · 邀請 */}
+      <SectionDivider variant="goldDrop" whisper="and so, we invite you" chapter="拾 · 邀請" />
+
+      {/* 9. Appointment */}
+      <AppointmentV3 />
+
+      {/* Footer 落款 */}
       <footer className="relative bg-ink paper-texture py-20 px-8">
         <div className="relative z-10 max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-paper-cream/55">
           <div className="flex items-center gap-4">
-            <div className="font-elegant italic text-xs tracking-[0.4em] uppercase">
-              I · ME
-            </div>
+            <div className="font-elegant italic text-xs tracking-[0.4em] uppercase">I · ME</div>
             <div className="w-px h-4 bg-leaf-gold/40" />
-            <div className="font-sans-tc text-xs tracking-wider">
-              Exosome Beauty · 外泌體美容
-            </div>
+            <div className="font-sans-tc text-xs tracking-wider">Exosome Beauty · 外泌體美容</div>
           </div>
+          <a
+            href="/"
+            className="font-elegant italic text-[0.68rem] tracking-[0.3em] uppercase text-paper-cream/30 hover:text-leaf-goldLight transition-colors duration-500 border-b border-transparent hover:border-leaf-gold/40 pb-1"
+          >
+            ← compare with v2
+          </a>
           <div className="font-elegant italic text-[0.65rem] tracking-[0.3em] uppercase text-paper-cream/30">
             v3 · oriental atelier · {new Date().getFullYear()}
           </div>
