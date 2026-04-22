@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { HeroV3 } from "./HeroV3";
 import { BrandStoryV3 } from "./BrandStoryV3";
@@ -12,23 +13,26 @@ import { TestimonialV3 } from "./TestimonialV3";
 import { AppointmentV3 } from "./AppointmentV3";
 import { SectionDivider } from "./SectionDivider";
 
+// Ambient wow layers — ssr:false because all observe window/canvas
+const CursorV3 = dynamic(() => import("./CursorV3").then((m) => m.CursorV3), { ssr: false });
+const ScrollGoldThread = dynamic(() => import("./ScrollGoldThread").then((m) => m.ScrollGoldThread), { ssr: false });
+const AmbientGoldDust = dynamic(() => import("./AmbientGoldDust").then((m) => m.AmbientGoldDust), { ssr: false });
+const V3FloatingCTA = dynamic(() => import("./V3FloatingCTA").then((m) => m.V3FloatingCTA), { ssr: false });
+
 // ═══════════════════════════════════════════════════════════════
-//   V3 — Oriental Atelier Homepage (complete)
-//
-//   敘事弧 (10 幕 + 終幕):
-//     壹 · 品牌故事       察覺 → 相遇 → 選擇
-//     肆 · 皮膚解剖       表皮 / 真皮 / 皮下屏障
-//     伍 · 產品封瓶       USC-E / SiUPi POWDER (Living Vial)
-//     陸 · 印章牆         INCI / TFDA / 中韓專利
-//     柒 · 工坊           CEO Moli Chou + 團隊
-//     捌 · 見證           Before / After 拖曳 + 數據
-//     玖 · 耳語           用戶見證 crossfade
-//     拾 · 邀請           我想預約
+//   V3 — Oriental Atelier Homepage (COMPLETE + AMBIENT LAYER)
+//   "Sulwhasoo 人蔘暖意 + Tatcha 宣紙寧靜 + Whoo 朱砂印 + 台灣藥鋪卷軸"
 // ═══════════════════════════════════════════════════════════════
 
 export default function V3Client() {
   return (
     <main className="relative">
+      {/* ── Ambient wow layers(貫穿全站)── */}
+      <CursorV3 />
+      <ScrollGoldThread />
+      <AmbientGoldDust count={28} />
+      <V3FloatingCTA />
+
       {/* Version badge */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -43,49 +47,41 @@ export default function V3Client() {
       {/* 1. Hero */}
       <HeroV3 />
 
-      {/* Divider · 壹 相遇 */}
       <SectionDivider variant="seal" sealChar="遇" whisper="the first chapter" chapter="壹 · 品牌故事" />
 
       {/* 2. BrandStory */}
       <BrandStoryV3 />
 
-      {/* Divider · 知識 */}
       <SectionDivider variant="goldDrop" whisper="in the skin's quiet architecture" chapter="肆 · 皮膚解剖" />
 
       {/* 3. SkinLayers */}
       <SkinLayersV3 />
 
-      {/* Divider · 科學 */}
       <SectionDivider variant="brush" whisper="bottled, measured, certified" chapter="伍 · 產品封瓶" tone="dark" />
 
       {/* 4. Product — Living Vial */}
       <ProductV3 />
 
-      {/* Divider · 印章 */}
       <SectionDivider variant="seal" sealChar="證" whisper="stamped by institutions" chapter="陸 · 印章牆" />
 
       {/* 5. Certificate */}
       <CertificateV3 />
 
-      {/* Divider · 人 */}
       <SectionDivider variant="goldDrop" whisper="the hands behind the formula" chapter="柒 · 工坊" />
 
       {/* 6. Founder */}
       <FounderV3 />
 
-      {/* Divider · 見證 */}
       <SectionDivider variant="brush" whisper="proof, drawn on skin" chapter="捌 · 見證" tone="dark" />
 
       {/* 7. Before / After */}
       <BeforeAfterV3 />
 
-      {/* Divider · 耳語 */}
       <SectionDivider variant="seal" sealChar="聆" whisper="voices from the journey" chapter="玖 · 耳語" />
 
       {/* 8. Testimonial */}
       <TestimonialV3 />
 
-      {/* Divider · 邀請 */}
       <SectionDivider variant="goldDrop" whisper="and so, we invite you" chapter="拾 · 邀請" />
 
       {/* 9. Appointment */}

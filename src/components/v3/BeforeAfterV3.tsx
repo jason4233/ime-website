@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 
 // ═══════════════════════════════════════════════════════════════
@@ -34,10 +34,6 @@ export function BeforeAfterV3() {
   const inView = useInView(ref, { once: true, margin: "-120px" });
   const [split, setSplit] = useState(50); // % from left
   const count = useCountUp(47, 1.8, inView);
-
-  // Drag handling
-  const x = useMotionValue(0);
-  const xSpring = useSpring(x, { stiffness: 280, damping: 28 });
 
   const handleMove = (clientX: number) => {
     if (!sliderRef.current) return;
