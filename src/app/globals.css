@@ -191,4 +191,102 @@
   .animate-cta-breathe {
     animation: cta-breathe 3.2s ease-in-out infinite;
   }
+
+  /* ═══════════════════════════════════════════════════
+     V3 — 東方精品水墨 (Oriental Atelier) utilities
+     材質層: 宣紙 / 金箔 / 朱砂印章 / 墨筆
+     ═══════════════════════════════════════════════════ */
+
+  /* 宣紙紋理 — SVG fractalNoise + 溫暖米色調 */
+  .paper-texture {
+    position: relative;
+  }
+  .paper-texture::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.56  0 0 0 0 0.41  0 0 0 0 0.22  0 0 0 0.18 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    opacity: 0.55;
+    z-index: 1;
+  }
+
+  /* 燙金紙（更暖、有金色雜訊） */
+  .paper-gilt {
+    position: relative;
+  }
+  .paper-gilt::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3'/><feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.65  0 0 0 0 0.42  0 0 0 0.2 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
+      radial-gradient(ellipse at 50% 50%, rgba(201,166,107,0.12) 0%, transparent 70%);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    opacity: 0.65;
+    z-index: 1;
+  }
+
+  /* 金箔文字 — 多層漸層 + drop-shadow 模擬金屬質感 */
+  .text-leaf-gold {
+    background:
+      linear-gradient(135deg, #E8CF99 0%, #C9A66B 35%, #8E6F3B 65%, #C9A66B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 1px rgba(201,166,107,0.3)) drop-shadow(0 2px 4px rgba(140,100,40,0.15));
+  }
+
+  /* 墨汁滲透 — Serif 標題用,模擬宣紙上墨的邊緣暈染 */
+  .ink-bleed {
+    filter: drop-shadow(0 0 0.4px currentColor) drop-shadow(0 0.3px 0 currentColor);
+  }
+
+  /* 朱砂印章 stamp-press 動畫 */
+  @keyframes seal-stamp {
+    0%   { transform: scale(1.55) rotate(-7deg); opacity: 0; }
+    55%  { transform: scale(0.92) rotate(2deg);  opacity: 1; }
+    80%  { transform: scale(1.02) rotate(-1deg); }
+    100% { transform: scale(1)    rotate(0);     opacity: 1; }
+  }
+  .animate-seal-stamp {
+    animation: seal-stamp 0.9s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  }
+
+  /* 金墨水滴 — 章節分隔 */
+  @keyframes ink-drop {
+    0%   { transform: scaleY(0);   opacity: 0; }
+    60%  { transform: scaleY(1.1); opacity: 1; }
+    100% { transform: scaleY(1);   opacity: 1; }
+  }
+  .animate-ink-drop {
+    animation: ink-drop 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* 墨筆劃入場 */
+  @keyframes brush-stroke {
+    0%   { clip-path: inset(0 100% 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
+  }
+  .animate-brush-stroke {
+    animation: brush-stroke 1.6s cubic-bezier(0.7, 0, 0.3, 1) both;
+  }
+
+  /* 慢速呼吸 — Hero 粒子底層光暈 */
+  @keyframes slow-breathe {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50%      { opacity: 0.55; transform: scale(1.04); }
+  }
+  .animate-slow-breathe {
+    animation: slow-breathe 8s ease-in-out infinite;
+  }
+
+  /* 豎排中文 */
+  .writing-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
 }

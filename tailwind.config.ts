@@ -46,6 +46,45 @@ const config: Config = {
           elevated: "#FFFFFF",
           floating: "#FFFCF8",
         },
+        // ═══════════════════════════════════════════════════
+        // V3 — Oriental Atelier
+        // "Sulwhasoo 人蔘暖意 + Tatcha 宣紙寧靜 + Whoo 朱砂印 + 台灣藥鋪卷軸"
+        // ═══════════════════════════════════════════════════
+        vermillion: {
+          DEFAULT: "#B8322C",    // 朱砂紅 — 印章 accent，只用在最重要時刻
+          light: "#D14A3F",
+          dark: "#8E1F1C",
+        },
+        ink: {
+          DEFAULT: "#1A1514",    // 墨黑 — 比純黑更暖，適合大面積
+          deep: "#0D0908",
+          brush: "#3A2F2C",
+        },
+        aubergine: {
+          DEFAULT: "#2E1C3A",    // 深茄紫 — Hero + Product 信號色
+          deep: "#1F1228",
+          light: "#4A2F5E",
+        },
+        plum: {                  // agent brief 指定的奢華紫
+          DEFAULT: "#5B2A6E",
+          dark: "#3F1A4D",
+          light: "#7B2FBE",
+        },
+        paper: {
+          cream: "#F7F2E9",      // 宣紙 — 主背景
+          warm: "#EFE6D5",       // 老紙 — 進階底色
+          rice: "#FAF5EC",       // 米白 — 最淺
+        },
+        leaf: {
+          gold: "#C9A46B",       // 金箔 — 啞光材質感
+          goldLight: "#E6CFA0",  // 柔金
+          goldDeep: "#8E6F3B",   // 沉金
+        },
+        jade: {                  // 認證信任色 — agent brief 新增
+          DEFAULT: "#7A9B84",
+          light: "#A0BBA8",
+          dark: "#5A7A64",
+        },
       },
       fontFamily: {
         "serif-tc": ["var(--font-serif-tc)", "serif"],
