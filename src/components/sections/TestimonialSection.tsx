@@ -151,7 +151,7 @@ export function TestimonialSection() {
               <button
                 key={i}
                 onClick={() => setActive(i)}
-                className={`w-2 h-2 rounded-full transition-all duration-300
+                className={`w-2 h-2 rounded-full transition-[width,background-color] duration-300
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40
                   ${active === i
                     ? "w-8 bg-brand"

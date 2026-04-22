@@ -133,7 +133,7 @@ export function BrandStorySection() {
           {acts.map((a) => (
             <div
               key={a.id}
-              className={`w-1.5 rounded-full transition-all duration-500 ${
+              className={`w-1.5 rounded-full transition-[height,background-color] duration-500 ${
                 activeAct === a.id
                   ? "h-8 bg-brand/55"
                   : "h-1.5 bg-night/15"

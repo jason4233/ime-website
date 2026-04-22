@@ -134,7 +134,7 @@ function FounderCard({ founder, index }: { founder: typeof founders[0]; index: n
               {founder.socials.ig && (
                 <a href={founder.socials.ig} className="w-9 h-9 rounded-full border border-night/10
                   flex items-center justify-center text-night/30 hover:text-brand hover:border-brand/30
-                  transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                   aria-label="Instagram"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -147,7 +147,7 @@ function FounderCard({ founder, index }: { founder: typeof founders[0]; index: n
               {founder.socials.line && (
                 <a href={founder.socials.line} className="w-9 h-9 rounded-full border border-night/10
                   flex items-center justify-center text-night/30 hover:text-brand hover:border-brand/30
-                  transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                   aria-label="LINE"
                 >
                   <span className="text-xs font-bold">L</span>
@@ -156,7 +156,7 @@ function FounderCard({ founder, index }: { founder: typeof founders[0]; index: n
               {founder.socials.fb && (
                 <a href={founder.socials.fb} className="w-9 h-9 rounded-full border border-night/10
                   flex items-center justify-center text-night/30 hover:text-brand hover:border-brand/30
-                  transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                   aria-label="Facebook"
                 >
                   <span className="text-xs font-bold">f</span>

@@ -673,7 +673,7 @@ export function SkinLayers() {
             >
               <div className="relative">
                 <div
-                  className="w-2 h-2 rounded-full transition-all duration-300"
+                  className="w-2 h-2 rounded-full transition-colors duration-300"
                   style={{
                     backgroundColor: activeLayer === i ? layer.accent : "rgba(58, 31, 22, 0.2)",
                     boxShadow: activeLayer === i ? `0 0 20px ${layer.accent}99` : "none",

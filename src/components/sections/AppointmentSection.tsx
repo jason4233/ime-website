@@ -115,7 +115,7 @@ export function AppointmentSection() {
                       className="w-full px-4 py-3 bg-night/[0.02] border border-night/8 rounded-md
                                  text-night font-body text-sm placeholder:text-night/20
                                  focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/20
-                                 transition-all duration-300"
+                                 transition-colors duration-300"
                     />
                   </div>
                 ))}
@@ -130,7 +130,7 @@ export function AppointmentSection() {
                     className="w-full px-4 py-3 bg-night/[0.02] border border-night/8 rounded-md
                                text-night font-body text-sm
                                focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/20
-                               transition-all duration-300"
+                               transition-colors duration-300"
                   >
                     <option value="">請選擇...</option>
                     {courseOptions.map((c) => (
@@ -150,7 +150,7 @@ export function AppointmentSection() {
                         <input type="radio" name="timeSlot" value={slot} className="peer sr-only" />
                         <span className="inline-block px-4 py-2 text-caption font-body rounded-md border border-night/8
                                         text-night/40 peer-checked:border-brand peer-checked:text-brand peer-checked:bg-brand/5
-                                        hover:border-night/20 transition-all duration-200">
+                                        hover:border-night/20 transition-colors duration-200">
                           {slot}
                         </span>
                       </label>
@@ -169,7 +169,7 @@ export function AppointmentSection() {
                     className="w-full px-4 py-3 bg-night/[0.02] border border-night/8 rounded-md
                                text-night font-body text-sm resize-none
                                focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/20
-                               transition-all duration-300"
+                               transition-colors duration-300"
                   />
                 </div>
 
