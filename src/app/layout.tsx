@@ -8,6 +8,8 @@ const SmoothScroll = dynamic(() => import("@/components/layout/SmoothScroll").th
 const CustomCursor = dynamic(() => import("@/components/ui/CustomCursor").then(m => m.CustomCursor), { ssr: false });
 // Ambient layer — 頂部 scroll 進度條（金線）。ScrollProgress 依賴 window → ssr:false
 const ScrollProgress = dynamic(() => import("@/components/ambient/ScrollProgress").then(m => m.ScrollProgress), { ssr: false });
+// FloatingCTA — Hero 過後的漂浮「我想預約」按鈕
+const FloatingCTA = dynamic(() => import("@/components/ui/FloatingCTA").then(m => m.FloatingCTA), { ssr: false });
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -114,6 +116,7 @@ export default function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
+        <FloatingCTA />
       </body>
     </html>
   );
