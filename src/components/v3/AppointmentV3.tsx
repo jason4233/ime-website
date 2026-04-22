@@ -40,16 +40,12 @@ export function AppointmentV3() {
       id="appointment"
       className="relative bg-paper-warm paper-texture py-32 md:py-44 px-8 overflow-hidden"
     >
-      {/* 朱砂封蠟印浮水印 — 大背景 */}
+      {/* 朱砂封蠟印浮水印 — 大背景(手機縮到 55vw 避免壓表單) */}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={inView ? { opacity: 0.08, scale: 1 } : {}}
         transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-        style={{
-          width: "min(70vw, 620px)",
-          height: "min(70vw, 620px)",
-        }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none w-[min(55vw,620px)] h-[min(55vw,620px)] md:w-[min(70vw,620px)] md:h-[min(70vw,620px)]"
       >
         <div
           className="w-full h-full flex items-center justify-center bg-vermillion"
@@ -61,8 +57,7 @@ export function AppointmentV3() {
           }}
         >
           <span
-            className="font-serif-tc text-paper-cream font-bold tracking-widest"
-            style={{ fontSize: "clamp(12rem, 28vw, 22rem)" }}
+            className="font-serif-tc text-paper-cream font-bold tracking-widest text-[clamp(8rem,22vw,22rem)]"
           >
             泌
           </span>

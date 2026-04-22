@@ -33,12 +33,12 @@ export default function V3Client() {
       <AmbientGoldDust count={28} />
       <V3FloatingCTA />
 
-      {/* Version badge */}
+      {/* Version badge — hidden on mobile to avoid Header hamburger collision */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 3.8 }}
-        className="fixed top-6 right-6 z-50 px-4 py-2 bg-ink/85 backdrop-blur-sm text-paper-cream font-elegant italic text-xs tracking-[0.3em] border border-leaf-gold/30"
+        className="hidden lg:block fixed top-24 right-6 z-50 px-4 py-2 bg-ink/85 backdrop-blur-sm text-paper-cream font-elegant italic text-xs tracking-[0.3em] border border-leaf-gold/30"
         style={{ borderRadius: "2px" }}
       >
         V3 · Oriental Atelier

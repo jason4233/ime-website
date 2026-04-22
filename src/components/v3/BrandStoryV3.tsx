@@ -98,8 +98,8 @@ export function BrandStoryV3() {
           />
         ))}
 
-        {/* 頁角印章（hover 會偏移） */}
-        <div className="absolute top-14 right-14 z-[15] pointer-events-none">
+        {/* 頁角印章（hover 會偏移；手機縮小移位避免壓到文字） */}
+        <div className="absolute top-6 right-6 md:top-14 md:right-14 z-[15] pointer-events-none">
           <AnimatePresence mode="wait">
             <motion.div
               key={`seal-${activeAct}`}
@@ -107,7 +107,7 @@ export function BrandStoryV3() {
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.9, ease: [0.3, 1.4, 0.5, 1] }}
-              className="relative w-[72px] h-[72px] flex items-center justify-center bg-vermillion"
+              className="relative w-[52px] h-[52px] md:w-[72px] md:h-[72px] flex items-center justify-center bg-vermillion"
               style={{
                 backgroundImage: `
                   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><filter id='k'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.64  0 0 0 0 0.17  0 0 0 0 0.18  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23k)'/></svg>")`,
@@ -117,8 +117,8 @@ export function BrandStoryV3() {
               }}
             >
               <span
-                className="font-serif-tc text-paper-cream font-bold"
-                style={{ fontSize: 32, letterSpacing: "0.02em" }}
+                className="font-serif-tc text-paper-cream font-bold text-[22px] md:text-[32px]"
+                style={{ letterSpacing: "0.02em" }}
               >
                 {act.sealChar}
               </span>
@@ -150,8 +150,8 @@ export function BrandStoryV3() {
           className="absolute bottom-10 left-[10%] right-[10%] h-px bg-leaf-gold/40 origin-right z-[12]"
         />
 
-        {/* 章節進度指示（左側數字豎排） */}
-        <div className="absolute left-8 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-6">
+        {/* 章節進度指示（左側數字豎排；手機縮到角落） */}
+        <div className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-4 md:gap-6">
           {acts.map((a, i) => (
             <div key={a.id} className="flex flex-col items-center gap-2">
               <motion.div

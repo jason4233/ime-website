@@ -639,8 +639,8 @@ export function SkinLayersV3() {
               ))}
           </motion.svg>
 
-          {/* ─── Layer labels overlay (right side) ─── */}
-          <div className="absolute inset-0 pointer-events-none">
+          {/* Desktop: overlay labels (absolute 疊在 SVG 上) */}
+          <div className="absolute inset-0 pointer-events-none hidden md:block">
             {[
               { tc: "表皮層", en: "Epidermis", depth: "0.05–0.1 mm", detail: "提亮 · 細緻 · 保濕重建", y: 11 },
               { tc: "真皮層", en: "Dermis", depth: "1.5–4 mm", detail: "膠原訊號傳遞 · 彈潤呵護", y: 45 },
@@ -651,7 +651,7 @@ export function SkinLayersV3() {
                 initial={{ opacity: 0, x: 30 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.9, delay: 1.2 + i * 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute right-3 md:right-10 pointer-events-auto bg-paper-cream/75 backdrop-blur-sm px-4 py-3 border border-leaf-gold/30"
+                className="absolute right-10 pointer-events-auto bg-paper-cream/75 backdrop-blur-sm px-4 py-3 border border-leaf-gold/30"
                 style={{
                   top: `${layer.y}%`,
                   transform: "translateY(-50%)",
@@ -664,7 +664,7 @@ export function SkinLayersV3() {
                     <p className="font-elegant italic text-leaf-goldDeep text-[0.65rem] tracking-[0.4em] uppercase mb-1">
                       {layer.en}
                     </p>
-                    <h3 className="font-serif-tc text-ink text-lg md:text-xl font-medium leading-tight">
+                    <h3 className="font-serif-tc text-ink text-xl font-medium leading-tight">
                       {layer.tc}
                     </h3>
                     <p className="font-sans-tc text-ink/55 text-[0.7rem] mt-1">
@@ -675,6 +675,37 @@ export function SkinLayersV3() {
               </motion.div>
             ))}
           </div>
+        </div>
+
+        {/* Mobile: stacked label cards below SVG */}
+        <div className="md:hidden mt-6 space-y-3">
+          {[
+            { tc: "表皮層", en: "Epidermis", depth: "0.05–0.1 mm", detail: "提亮 · 細緻 · 保濕重建" },
+            { tc: "真皮層", en: "Dermis", depth: "1.5–4 mm", detail: "膠原訊號傳遞 · 彈潤呵護" },
+            { tc: "皮下屏障", en: "Hypodermal Barrier", depth: "深層", detail: "舒緩紅敏 · 修護乾燥" },
+          ].map((layer, i) => (
+            <motion.div
+              key={layer.en}
+              initial={{ opacity: 0, x: -20 }}
+              animate={inView ? { opacity: 1, x: 0 } : {}}
+              transition={{ duration: 0.8, delay: 1.2 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-start gap-4 px-5 py-4 bg-paper-cream border border-leaf-gold/30"
+              style={{ borderRadius: "2px" }}
+            >
+              <div className="w-8 h-px bg-leaf-gold flex-shrink-0 mt-3" />
+              <div>
+                <p className="font-elegant italic text-leaf-goldDeep text-[0.62rem] tracking-[0.4em] uppercase mb-1">
+                  {layer.en}
+                </p>
+                <h3 className="font-serif-tc text-ink text-lg font-medium leading-tight">
+                  {layer.tc}
+                </h3>
+                <p className="font-sans-tc text-ink/55 text-xs mt-1 leading-relaxed">
+                  {layer.depth} · {layer.detail}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* ─── Caption ─── */}
