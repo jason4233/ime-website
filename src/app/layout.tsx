@@ -6,8 +6,7 @@ import dynamic from "next/dynamic";
 // SmoothScroll + CustomCursor dynamic ssr:false — Lenis/styled-jsx global 在 mount 會改 document
 const SmoothScroll = dynamic(() => import("@/components/layout/SmoothScroll").then(m => m.SmoothScroll), { ssr: false });
 const CustomCursor = dynamic(() => import("@/components/ui/CustomCursor").then(m => m.CustomCursor), { ssr: false });
-// Ambient layer — Web Audio music + 頂部 scroll 進度條。兩者都依賴 window/AudioContext → ssr:false
-const BrandAmbientAudio = dynamic(() => import("@/components/ambient/BrandAmbientAudio").then(m => m.BrandAmbientAudio), { ssr: false });
+// Ambient layer — 頂部 scroll 進度條（金線）。ScrollProgress 依賴 window → ssr:false
 const ScrollProgress = dynamic(() => import("@/components/ambient/ScrollProgress").then(m => m.ScrollProgress), { ssr: false });
 import "./globals.css";
 
@@ -115,7 +114,6 @@ export default function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
-        <BrandAmbientAudio />
       </body>
     </html>
   );

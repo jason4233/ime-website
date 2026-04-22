@@ -12,12 +12,6 @@ const HeroParticles = dynamic(
   { ssr: false }
 );
 
-// WebGL Fluid Shader — 全螢幕紫金流體主視覺，滑鼠吸引、scroll 變色溫
-const HeroFluidShader = dynamic(
-  () => import("@/components/ui/HeroFluidShader").then((m) => m.HeroFluidShader),
-  { ssr: false }
-);
-
 // 逐字動畫工具
 function AnimatedText({
   text,
@@ -109,19 +103,6 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
       {/* 底層暗夜背景（紫黑漸層,讓粒子發光更明顯） */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0A0510] via-[#150820] to-[#0A0510] z-0" />
 
-      {/* 🌊 WebGL 紫金水彩流體 — 大型主視覺底層（全螢幕、滑鼠吸引、scroll 變色溫）
-          opacity 壓到 45% + 中央放射狀暗化，讓文字在中央有可讀安全區 */}
-      <HeroFluidShader className="absolute inset-0 w-full h-full z-[1] pointer-events-none opacity-45" />
-
-      {/* 中央可讀性保護層 — 放射暗光，中央特別暗讓白字對比足夠 */}
-      <div
-        className="absolute inset-0 z-[2] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(10, 5, 20, 0.55) 0%, rgba(10, 5, 20, 0.25) 55%, transparent 100%)",
-        }}
-      />
-
       {/* 電影感底層 — Remotion 出的 6 秒 seamless loop
           紫色星雲呼吸 + 遠處金霧 + 金絲筆觸 + 金塵飄浮 + vignette
           mix-blend-mode: screen 讓金絲紫霧「加亮」疊到 gradient 上，不覆蓋底色 */}
@@ -143,14 +124,14 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
           - shadowBlur 給每顆做光暈霧化 */}
       <HeroParticles
         className="absolute inset-0 z-10"
-        quantity={60}
-        baseSize={5.5}
-        speed={0.005}
+        quantity={140}
+        baseSize={2.4}
+        speed={0.0065}
         colorA="#D4B36A"
         colorB="#9B5DD4"
-        maxZ={3.5}
-        mouseInfluence={0.4}
-        glow={28}
+        maxZ={4}
+        mouseInfluence={0.35}
+        glow={14}
       />
 
       {/* 邊緣暗角 + 底部 fade 讓下個 section 無縫接 */}
@@ -222,10 +203,10 @@ export function HeroSection({ data }: { data?: HeroData | null } = {}) {
           className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-5"
         >
           <MagneticButton href={cmsCtaLink ?? "/contact"} variant="gold">
-            {cmsCtaText ?? "預約泌容術體驗"}
+            {cmsCtaText ?? "我想預約"}
           </MagneticButton>
           <MagneticButton href="/about" variant="ghost" className="text-ivory/40 border-ivory/10 hover:text-ivory/70 hover:border-ivory/25">
-            了解外泌體原理
+            了解外泌體
           </MagneticButton>
         </motion.div>
       </motion.div>
