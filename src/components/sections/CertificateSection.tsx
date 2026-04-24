@@ -5,8 +5,16 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import Masonry from "react-masonry-css";
 import { TextReveal } from "@/components/ui/TextReveal";
 
-// 真實證書圖片（來自 /public/images/）
-const certificates = [
+type CertItem = {
+  id: string | number;
+  title: string;
+  issuer: string;
+  aspect: string;
+  imageUrl: string;
+};
+
+// Fallback — CMS 沒資料時顯示（真實證書圖片）
+const fallbackCertificates: CertItem[] = [
   { id: 1, title: "INCI 國際原料登錄 Mono ID 40148", issuer: "Personal Care Products Council", aspect: "4/3", imageUrl: "/images/660080_0.jpg" },
   { id: 2, title: "衛部醫器製字第 008446 號", issuer: "台灣衛生福利部", aspect: "3/4", imageUrl: "/images/660174_0.jpg" },
   { id: 3, title: "中國發明專利 — 組織細胞裝置設備", issuer: "中國國家知識產權局", aspect: "3/4", imageUrl: "/images/660083_0.jpg" },
@@ -18,8 +26,21 @@ const certificates = [
   { id: 9, title: "國際原料登錄證明", issuer: "Personal Care Products Council", aspect: "4/3", imageUrl: "/images/660082_0.jpg" },
 ];
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function mapDbCert(d: any, i: number): CertItem {
+  // 沒有 aspect 欄位，依照 index 交替 4/3 與 3/4 讓 masonry 自然錯落
+  const aspect = i % 3 === 0 ? "4/3" : "3/4";
+  return {
+    id: d.id,
+    title: d.title ?? "",
+    issuer: d.issuer ?? "",
+    aspect,
+    imageUrl: d.imageUrl || d.pdfUrl || "/images/660080_0.jpg",
+  };
+}
+
 function CertCard({ cert, index, onClick }: {
-  cert: typeof certificates[0];
+  cert: CertItem;
   index: number;
   onClick: () => void;
 }) {
@@ -79,8 +100,12 @@ function CertCard({ cert, index, onClick }: {
   );
 }
 
-export function CertificateSection() {
-  const [lightbox, setLightbox] = useState<typeof certificates[0] | null>(null);
+export function CertificateSection({ data }: { data?: any[] } = {}) {
+  const certificates: CertItem[] =
+    data && data.length > 0
+      ? data.map(mapDbCert)
+      : fallbackCertificates;
+  const [lightbox, setLightbox] = useState<CertItem | null>(null);
 
   const breakpoints = { default: 3, 768: 2, 480: 1 };
 

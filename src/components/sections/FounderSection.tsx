@@ -4,8 +4,19 @@ import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { TextReveal } from "@/components/ui/TextReveal";
 
-// placeholder 創始人資料（之後由後台 API 適配後替換 — 見 FounderSection 下方 signature）
-const founders = [
+type FounderItem = {
+  id: string;
+  name: string;
+  chineseName: string;
+  title: string;
+  quote: string;
+  paragraphs: string[];
+  photoUrl: string;
+  socials: { ig?: string; line?: string; fb?: string };
+};
+
+// Fallback — CMS 無資料時顯示
+const fallbackFounders: FounderItem[] = [
   {
     id: "moli",
     name: "Moli Chou",
@@ -36,7 +47,33 @@ const founders = [
   },
 ];
 
-function FounderCard({ founder, index }: { founder: typeof founders[0]; index: number }) {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function mapDbFounder(d: any): FounderItem {
+  // DB 的 bio 是單欄字串，用空行切成多段顯示
+  const paragraphs = String(d.bio ?? "")
+    .split(/\n\s*\n+/)
+    .map((s: string) => s.trim())
+    .filter(Boolean);
+  return {
+    id: d.id,
+    name: d.name ?? "",
+    chineseName: "",
+    title: d.title ?? "",
+    quote: d.quote ?? "",
+    paragraphs: paragraphs.length > 0 ? paragraphs : [String(d.bio ?? "")],
+    photoUrl:
+      d.photoUrl || "https://placehold.co/600x800/1a1a1a/B8953F?text=Founder",
+    socials: {},
+  };
+}
+
+function FounderCard({
+  founder,
+  index,
+}: {
+  founder: FounderItem;
+  index: number;
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-15%" });
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -170,7 +207,10 @@ function FounderCard({ founder, index }: { founder: typeof founders[0]; index: n
   );
 }
 
-export function FounderSection() {
+export function FounderSection({ data }: { data?: any[] } = {}) {
+  const items: FounderItem[] =
+    data && data.length > 0 ? data.map(mapDbFounder) : fallbackFounders;
+
   return (
     <section className="py-section-lg bg-ivory relative overflow-hidden noise-overlay">
       {/* 裝飾 */}
@@ -194,7 +234,7 @@ export function FounderSection() {
         <div className="flex gap-12 px-6 lg:px-12 pb-8 snap-x snap-mandatory"
           style={{ width: "max-content" }}
         >
-          {founders.map((f, i) => (
+          {items.map((f, i) => (
             <FounderCard key={f.id} founder={f} index={i} />
           ))}
         </div>

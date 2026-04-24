@@ -4,7 +4,19 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TextReveal } from "@/components/ui/TextReveal";
 
-const testimonials = [
+type TestimonialItem = {
+  id: string | number;
+  name: string;
+  age: number | null;
+  role: string;
+  course: string;
+  month: string;
+  rating: number;
+  content: string[];
+};
+
+// Fallback — CMS 沒資料時顯示（第一次部署 or DB 連線失敗）
+const fallbackTestimonials: TestimonialItem[] = [
   {
     id: 1,
     name: "L 小姐",
@@ -49,6 +61,29 @@ const testimonials = [
   },
 ];
 
+// 把 DB 記錄轉成本地 shape
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function mapDbTestimonial(d: any): TestimonialItem {
+  return {
+    id: d.id,
+    name: d.customerName ?? "顧客",
+    age: d.age ?? null,
+    role: d.courseType ?? "",
+    course: d.courseType ?? "",
+    month: d.createdAt
+      ? new Date(d.createdAt).toLocaleDateString("zh-TW", {
+          year: "numeric",
+          month: "long",
+        })
+      : "",
+    rating: d.rating ?? 5,
+    content: String(d.content ?? "")
+      .split(/\n+/)
+      .map((s: string) => s.trim())
+      .filter(Boolean),
+  };
+}
+
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex gap-1">
@@ -61,11 +96,15 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function TestimonialSection() {
+export function TestimonialSection({ data }: { data?: any[] } = {}) {
+  const items: TestimonialItem[] =
+    data && data.length > 0 ? data.map(mapDbTestimonial) : fallbackTestimonials;
+
   const [active, setActive] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
-  const item = testimonials[active];
+  const safeIndex = Math.min(active, items.length - 1);
+  const item = items[safeIndex];
 
   return (
     <section ref={ref} className="py-section-lg bg-deep-rose relative overflow-hidden noise-overlay">
@@ -117,7 +156,7 @@ export function TestimonialSection() {
                 </div>
                 <div>
                   <p className="font-sans-tc text-sm text-ivory/80 font-medium">
-                    {item.name} · {item.age} · {item.role}
+                    {[item.name, item.age, item.role].filter(Boolean).join(" · ")}
                   </p>
                   <StarRating rating={item.rating} />
                 </div>
@@ -147,7 +186,7 @@ export function TestimonialSection() {
 
           {/* 導航 */}
           <div className="flex items-center justify-center gap-3 mt-8">
-            {testimonials.map((_, i) => (
+            {items.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActive(i)}

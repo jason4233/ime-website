@@ -12,7 +12,17 @@ const ReactCompareSlider = dynamic(
   { ssr: false }
 );
 
-const cases = [
+type CaseItem = {
+  id: string | number;
+  title: string;
+  days: number;
+  sessions: number;
+  note: string;
+  before: string;
+  after: string;
+};
+
+const fallbackCases: CaseItem[] = [
   {
     id: 1,
     title: "雷射術後修復",
@@ -42,7 +52,20 @@ const cases = [
   },
 ];
 
-function CaseCard({ caseItem, index }: { caseItem: typeof cases[0]; index: number }) {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function mapDbCase(d: any): CaseItem {
+  return {
+    id: d.id,
+    title: d.title ?? "案例",
+    days: d.daysBetween ?? 0,
+    sessions: 0, // DB 沒有 sessions 欄位，可由 notes 推斷或後續加入
+    note: d.notes ?? "",
+    before: d.beforeImageUrl || fallbackCases[0].before,
+    after: d.afterImageUrl || fallbackCases[0].after,
+  };
+}
+
+function CaseCard({ caseItem, index }: { caseItem: CaseItem; index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-10%" });
 
@@ -95,7 +118,9 @@ function CaseCard({ caseItem, index }: { caseItem: typeof cases[0]; index: numbe
   );
 }
 
-export function BeforeAfterSection() {
+export function BeforeAfterSection({ data }: { data?: any[] } = {}) {
+  const cases: CaseItem[] =
+    data && data.length > 0 ? data.map(mapDbCase) : fallbackCases;
   return (
     <section className="py-section-lg bg-[#0C0C0C] relative overflow-hidden noise-overlay">
       <div className="absolute top-0 right-[15%] w-px h-[20vh] bg-gradient-to-b from-gold/8 to-transparent" />

@@ -25,7 +25,7 @@ export const getHero = unstable_cache(
     }
   },
   ["hero"],
-  { tags: ["hero"], revalidate: 3600 }
+  { tags: ["hero"], revalidate: 60 }
 );
 
 // ─── Brand Story ──────────────────────────────
@@ -40,7 +40,7 @@ export const getBrandStory = unstable_cache(
     }
   },
   ["brand-story"],
-  { tags: ["brand-story"], revalidate: 3600 }
+  { tags: ["brand-story"], revalidate: 60 }
 );
 
 // ─── Founders ─────────────────────────────────
@@ -53,7 +53,7 @@ export const getFounders = unstable_cache(
     }
   },
   ["founders"],
-  { tags: ["founders"], revalidate: 3600 }
+  { tags: ["founders"], revalidate: 60 }
 );
 
 // ─── Products ─────────────────────────────────
@@ -66,7 +66,7 @@ export const getProducts = unstable_cache(
     }
   },
   ["products"],
-  { tags: ["products"], revalidate: 3600 }
+  { tags: ["products"], revalidate: 60 }
 );
 
 // ─── Courses ──────────────────────────────────
@@ -79,7 +79,7 @@ export const getCourses = unstable_cache(
     }
   },
   ["courses"],
-  { tags: ["courses"], revalidate: 3600 }
+  { tags: ["courses"], revalidate: 60 }
 );
 
 // ─── Certificates ─────────────────────────────
@@ -92,7 +92,7 @@ export const getCertificates = unstable_cache(
     }
   },
   ["certificates"],
-  { tags: ["certificates"], revalidate: 3600 }
+  { tags: ["certificates"], revalidate: 60 }
 );
 
 // ─── News ─────────────────────────────────────
@@ -105,7 +105,7 @@ export const getNews = unstable_cache(
     }
   },
   ["news"],
-  { tags: ["news"], revalidate: 3600 }
+  { tags: ["news"], revalidate: 60 }
 );
 
 // ─── Testimonials ─────────────────────────────
@@ -118,7 +118,7 @@ export const getTestimonials = unstable_cache(
     }
   },
   ["testimonials"],
-  { tags: ["testimonials"], revalidate: 3600 }
+  { tags: ["testimonials"], revalidate: 60 }
 );
 
 // ─── Before / After ───────────────────────────
@@ -131,7 +131,7 @@ export const getBeforeAfter = unstable_cache(
     }
   },
   ["before-after"],
-  { tags: ["before-after"], revalidate: 3600 }
+  { tags: ["before-after"], revalidate: 60 }
 );
 
 // ─── Factory / RnD Highlights ─────────────────
@@ -147,7 +147,7 @@ export const getFactoryHighlights = unstable_cache(
     }
   },
   ["factory"],
-  { tags: ["factory"], revalidate: 3600 }
+  { tags: ["factory"], revalidate: 60 }
 );
 
 // ─── Site Settings ────────────────────────────
@@ -160,7 +160,7 @@ export const getSiteSettings = unstable_cache(
     }
   },
   ["site-settings"],
-  { tags: ["site-settings"], revalidate: 3600 }
+  { tags: ["site-settings"], revalidate: 60 }
 );
 
 /**

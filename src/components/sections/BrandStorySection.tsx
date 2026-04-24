@@ -63,7 +63,25 @@ const acts: Act[] = [
   },
 ];
 
-export function BrandStorySection() {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export function BrandStorySection({ data }: { data?: any[] } = {}) {
+  // CMS 只覆寫 title 和 body，視覺主題（顏色、whisper 詩句）仍用 hardcoded
+  // 依 order 排序後，位置 0/1/2 對應 Act 1/2/3
+  const overrides: { title?: string; body?: string }[] = [];
+  if (data && data.length > 0) {
+    data.slice(0, 3).forEach((d, i) => {
+      overrides[i] = {
+        title: d.title,
+        body: d.bodyRichText,
+      };
+    });
+  }
+  const enrichedActs = acts.map((a, i) => ({
+    ...a,
+    title: overrides[i]?.title || a.title,
+    body: overrides[i]?.body || a.body,
+  }));
+
   const outerRef = useRef<HTMLDivElement>(null);
   const [activeAct, setActiveAct] = useState(0);
 
@@ -83,13 +101,13 @@ export function BrandStorySection() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const act = acts[activeAct];
+  const act = enrichedActs[activeAct];
 
   return (
     <div ref={outerRef} style={{ height: "300vh" }} className="relative">
       <section className="sticky top-0 h-screen w-full overflow-hidden">
         {/* Layer 0 — 背景色 cross-fade */}
-        {acts.map((a) => (
+        {enrichedActs.map((a) => (
           <motion.div
             key={a.id}
             className={`absolute inset-0 ${a.bg} noise-overlay`}
@@ -130,7 +148,7 @@ export function BrandStorySection() {
 
         {/* Layer 10 — 章節進度指示 */}
         <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3">
-          {acts.map((a) => (
+          {enrichedActs.map((a) => (
             <div
               key={a.id}
               className={`w-1.5 rounded-full transition-[height,background-color] duration-500 ${

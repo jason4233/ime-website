@@ -42,8 +42,9 @@ export default function AdminApplicationsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/applications?limit=500");
-      const data = await res.json();
-      setItems(Array.isArray(data) ? data : []);
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
+      setItems(Array.isArray(list) ? list : []);
     } catch {
       setItems([]);
     }

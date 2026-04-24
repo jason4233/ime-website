@@ -24,6 +24,8 @@ const menuItems = [
 
 export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [revalidating, setRevalidating] = useState(false);
+  const [revalidateMsg, setRevalidateMsg] = useState<string | null>(null);
   const pathname = usePathname();
 
   return (
@@ -74,6 +76,36 @@ export function AdminSidebar() {
 
       {/* Bottom */}
       <div className="border-t border-ivory/5 p-2 shrink-0 space-y-1">
+        <button
+          onClick={async () => {
+            setRevalidating(true);
+            try {
+              const res = await fetch("/api/admin/revalidate", { method: "POST" });
+              if (res.ok) {
+                setRevalidateMsg("✓ 前台已更新");
+              } else {
+                setRevalidateMsg("✗ 更新失敗");
+              }
+            } catch {
+              setRevalidateMsg("✗ 網路錯誤");
+            }
+            setRevalidating(false);
+            setTimeout(() => setRevalidateMsg(null), 2500);
+          }}
+          disabled={revalidating}
+          title={collapsed ? "立即更新前台" : undefined}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm
+                     text-gold/70 hover:text-gold hover:bg-gold/5
+                     transition-all duration-200 disabled:opacity-40
+                     focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gold/40"
+        >
+          <span className="text-base shrink-0">{revalidating ? "⏳" : "🔄"}</span>
+          {!collapsed && (
+            <span className="font-body truncate">
+              {revalidateMsg ?? (revalidating ? "更新中..." : "立即更新前台")}
+            </span>
+          )}
+        </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm

@@ -47,8 +47,10 @@ export function CrudPage<T extends { id: string; order?: number }>({
     setLoading(true);
     try {
       const res = await fetch(`${apiPath}?search=${encodeURIComponent(search)}&limit=200`);
-      const data = await res.json();
-      setItems(Array.isArray(data) ? data : []);
+      const payload = await res.json();
+      // API 回傳 { data: [...], total, page, limit } — 相容舊的直接回陣列格式
+      const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
+      setItems(Array.isArray(list) ? list : []);
     } catch { setItems([]); }
     setLoading(false);
   }, [apiPath, search]);

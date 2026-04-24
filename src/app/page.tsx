@@ -1,8 +1,41 @@
 import { OrganizationJsonLd, ProductJsonLd, ServiceJsonLd, WebSiteJsonLd, FAQJsonLd } from "@/components/seo/JsonLd";
 import HomeClient from "@/components/HomeClient";
+import {
+  getHero,
+  getBrandStory,
+  getFounders,
+  getProducts,
+  getCertificates,
+  getTestimonials,
+  getNews,
+  getBeforeAfter,
+  getSiteSettings,
+} from "@/lib/content";
 
-// Direct render (no Loader) — 測試最單純的 SSR path
-export default function Home() {
+export default async function Home() {
+  // 平行 fetch 所有 CMS 資料 — DB 沒資料或失敗時 getter 會回空值，不會 crash
+  const [
+    hero,
+    brandStory,
+    founders,
+    products,
+    certificates,
+    testimonials,
+    news,
+    beforeAfter,
+    siteSettings,
+  ] = await Promise.all([
+    getHero(),
+    getBrandStory(),
+    getFounders(),
+    getProducts(),
+    getCertificates(),
+    getTestimonials(),
+    getNews(),
+    getBeforeAfter(),
+    getSiteSettings(),
+  ]);
+
   return (
     <>
       <OrganizationJsonLd />
@@ -10,7 +43,19 @@ export default function Home() {
       <ProductJsonLd />
       <ServiceJsonLd />
       <FAQJsonLd />
-      <HomeClient />
+      <HomeClient
+        cms={{
+          hero,
+          brandStory,
+          founders,
+          products,
+          certificates,
+          testimonials,
+          news,
+          beforeAfter,
+          siteSettings,
+        }}
+      />
     </>
   );
 }

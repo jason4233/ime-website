@@ -11,8 +11,11 @@ interface Appointment {
   name: string;
   phone: string;
   email: string;
-  courseName: string;
+  // API 回傳 course: { id, name, ... } 關聯物件
+  course?: { id: string; name: string } | null;
+  courseId?: string | null;
   preferredDate: string;
+  preferredTimeSlot?: string | null;
   status: AppointmentStatus;
   createdAt: string;
   notes?: string;
@@ -45,8 +48,9 @@ export default function AdminAppointmentsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/appointments?limit=500");
-      const data = await res.json();
-      setItems(Array.isArray(data) ? data : []);
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
+      setItems(Array.isArray(list) ? list : []);
     } catch {
       setItems([]);
     }
@@ -167,7 +171,7 @@ export default function AdminAppointmentsPage() {
                     <td className="px-3 py-3 text-sm text-ivory/60 font-body">{item.name}</td>
                     <td className="px-3 py-3 text-sm text-ivory/60 font-body">{item.phone}</td>
                     <td className="px-3 py-3 text-sm text-ivory/60 font-body">{item.email}</td>
-                    <td className="px-3 py-3 text-sm text-ivory/60 font-body">{item.courseName}</td>
+                    <td className="px-3 py-3 text-sm text-ivory/60 font-body">{item.course?.name ?? "—"}</td>
                     <td className="px-3 py-3 text-sm text-ivory/60 font-body">
                       {item.preferredDate ? new Date(item.preferredDate).toLocaleDateString("zh-TW") : "—"}
                     </td>
@@ -224,7 +228,8 @@ export default function AdminAppointmentsPage() {
                 { label: "姓名", value: detailItem.name },
                 { label: "電話", value: detailItem.phone },
                 { label: "Email", value: detailItem.email },
-                { label: "課程名稱", value: detailItem.courseName },
+                { label: "課程名稱", value: detailItem.course?.name ?? "未指定" },
+                { label: "預約時段", value: detailItem.preferredTimeSlot ?? "—" },
                 {
                   label: "偏好日期",
                   value: detailItem.preferredDate

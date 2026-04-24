@@ -14,10 +14,20 @@ const courseOptions = [
   { value: "antiaging", label: "深度抗老療程（150 分鐘）" },
 ];
 
-export function AppointmentSection() {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface AppointmentSectionProps {
+  // Site settings 從 CMS 傳進來，用於顯示 LINE/IG/Email 等聯絡方式
+  settings?: any;
+}
+
+export function AppointmentSection({ settings }: AppointmentSectionProps = {}) {
+  const lineUrl = settings?.lineUrl as string | undefined;
+  const contactPhone = settings?.contactPhone as string | undefined;
+
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // 未來 60 天
   const today = new Date();
@@ -29,9 +39,56 @@ export function AppointmentSection() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setErrorMsg(null);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setSubmitted(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const rawCourse = String(formData.get("courseId") ?? "");
+    const courseLabel =
+      courseOptions.find((c) => c.value === rawCourse)?.label ?? "";
+    const lineId = String(formData.get("lineId") ?? "").trim();
+    const rawNotes = String(formData.get("notes") ?? "").trim();
+
+    // 把 courseLabel / lineId 併進 notes（前台 courseOptions 是假值，DB 需要真實 courseId 才能關聯）
+    const notesParts: string[] = [];
+    if (courseLabel) notesParts.push(`課程：${courseLabel}`);
+    if (lineId) notesParts.push(`Line ID：${lineId}`);
+    if (rawNotes) notesParts.push(rawNotes);
+
+    const payload = {
+      name: String(formData.get("name") ?? "").trim(),
+      phone: String(formData.get("phone") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      preferredDate: selectedDate ? selectedDate.toISOString() : undefined,
+      preferredTimeSlot: String(formData.get("timeSlot") ?? "") || undefined,
+      notes: notesParts.join("\n") || undefined,
+    };
+
+    try {
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setErrorMsg(
+          body?.message ??
+            body?.details?.[0]?.message ??
+            "送出失敗，請確認資料後再試一次"
+        );
+        setLoading(false);
+        return;
+      }
+
+      form.reset();
+      setSelectedDate(undefined);
+      setSubmitted(true);
+    } catch {
+      setErrorMsg("網路錯誤，請稍後再試");
+    }
     setLoading(false);
   }
 
@@ -173,6 +230,12 @@ export function AppointmentSection() {
                   />
                 </div>
 
+                {errorMsg && (
+                  <p className="text-caption text-brand font-body text-center">
+                    {errorMsg}
+                  </p>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -206,10 +269,32 @@ export function AppointmentSection() {
               <h3 className="font-serif-tc text-2xl text-night font-medium mb-3">
                 預約已送出
               </h3>
-              <p className="font-sans-tc text-body text-night/40 mb-8">
+              <p className="font-sans-tc text-body text-night/40 mb-6">
                 我們會在 24 小時內與妳聯繫確認時間。<br />
                 期待見到妳 ✦
               </p>
+              {(lineUrl || contactPhone) && (
+                <div className="flex items-center justify-center gap-4 mb-6 text-caption text-night/50 font-body">
+                  {lineUrl && (
+                    <a
+                      href={lineUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline decoration-brand/40 hover:text-brand transition-colors"
+                    >
+                      加 LINE 聯繫
+                    </a>
+                  )}
+                  {contactPhone && (
+                    <a
+                      href={`tel:${contactPhone}`}
+                      className="underline decoration-brand/40 hover:text-brand transition-colors"
+                    >
+                      {contactPhone}
+                    </a>
+                  )}
+                </div>
+              )}
               <button
                 onClick={() => setSubmitted(false)}
                 className="text-caption text-brand hover:text-brand-dark transition-colors font-body

@@ -40,7 +40,23 @@ const stats = [
   { value: 40148, prefix: "Mono ID ", suffix: "", label: "INCI 國際原料登錄" },
 ];
 
-export function ProductSection() {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface ProductSectionProps {
+  // CMS 產品陣列，第一筆用於主視覺 panel
+  data?: any[];
+}
+
+export function ProductSection({ data }: ProductSectionProps = {}) {
+  // 取第一筆為主打產品；DB 沒資料就用硬編 fallback
+  const main = data && data.length > 0 ? data[0] : null;
+  const productName = main?.name ?? "ExoGiov® 臍帶間質幹細胞外泌體原液";
+  const productTagline = main?.tagline ?? "1mL Lyophilized Ampoule";
+  const productDesc =
+    main?.description ?? "不是疊加一層保養,\n是送一封訊息給妳的細胞。";
+  const productImage =
+    main?.imageUrl ??
+    "https://placehold.co/400x500/111111/B8953F?text=USC-E%0AAmpoule";
+
   const outerRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
 
@@ -82,8 +98,8 @@ export function ProductSection() {
                 <div className="relative w-64 h-80 md:w-80 md:h-[400px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="https://placehold.co/400x500/111111/B8953F?text=USC-E%0AAmpoule"
-                    alt="USC-E 外泌體原液"
+                    src={productImage}
+                    alt={productName}
                     className="w-full h-full object-contain relative z-10"
                   />
                   {/* 光暈 */}
@@ -97,16 +113,15 @@ export function ProductSection() {
                 <p className="text-overline text-brand-light uppercase tracking-[0.25em] font-body">
                   Core Product
                 </p>
-                <h2 className="font-serif-tc text-h2 text-ivory leading-tight">
-                  ExoGiov® 臍帶間質<br />幹細胞外泌體原液
+                <h2 className="font-serif-tc text-h2 text-ivory leading-tight whitespace-pre-line">
+                  {productName}
                 </h2>
                 <p className="font-elegant italic text-lg text-gold/60">
-                  1mL Lyophilized Ampoule
+                  {productTagline}
                 </p>
                 <div className="w-12 h-px bg-brand/30" />
-                <p className="font-sans-tc text-body-lg text-ivory/40 leading-[1.9] max-w-md">
-                  不是疊加一層保養,<br />
-                  是送一封訊息給妳的細胞。
+                <p className="font-sans-tc text-body-lg text-ivory/40 leading-[1.9] max-w-md whitespace-pre-line">
+                  {productDesc}
                 </p>
               </div>
             </div>
