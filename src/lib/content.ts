@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
+import { SITE_URL } from "./site-url";
 
 /**
  * 前台內容讀取層 — 從 DB 讀 + 用 revalidateTag 控制快取失效
@@ -169,7 +170,7 @@ export const getSiteSettings = unstable_cache(
  */
 export async function triggerRevalidate(tag: string) {
   const secret = process.env.REVALIDATE_SECRET;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const baseUrl = SITE_URL || "http://localhost:3000";
 
   if (!secret) {
     console.warn("[revalidate] REVALIDATE_SECRET missing, skipping");

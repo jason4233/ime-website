@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond, bodoniModa } from "@/lib/fonts";
+import { SITE_URL } from "@/lib/site-url";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import dynamic from "next/dynamic";
@@ -30,15 +31,15 @@ export const metadata: Metadata = {
     "泌容術", "泌容", "外泌體療程",
     "台中榮總", "楊孟寅醫師", "星和診所",
   ],
-  authors: [{ name: "I ME", url: process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app" }],
+  authors: [{ name: "I ME", url: SITE_URL }],
   creator: "I ME × StellarCell BioMedicine × Dr.SIGNAL",
   publisher: "I ME",
   category: "beauty, biotech, cosmetics",
   alternates: {
-    canonical: process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
+    canonical: SITE_URL,
     languages: {
-      "zh-TW": process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
-      "zh-Hant": process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
+      "zh-TW": SITE_URL,
+      "zh-Hant": SITE_URL,
     },
   },
   openGraph: {
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
     siteName: "I ME",
     locale: "zh_TW",
     type: "website",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app",
+    url: SITE_URL,
     images: [
       {
         url: "/images/42707_0.jpg",
@@ -85,7 +86,7 @@ export const metadata: Metadata = {
   verification: {
     google: "7euGE1z9iYpDigLuxrMB2fudR8oZdcS82YeQRgLPF-k",
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://ime-website-kappa.vercel.app"),
+  metadataBase: new URL(SITE_URL || "https://ime-website-kappa.vercel.app"),
   formatDetection: {
     email: false,
     address: false,

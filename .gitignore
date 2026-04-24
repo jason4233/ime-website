@@ -82,3 +82,5 @@ brand-videos/.remotion/
 .windsurf/
 .zencoder/
 /skills/
+
+.env*.local
