@@ -98,28 +98,165 @@ jade(翡翠):       #7A9B84 / light #A0BBA8 / dark #5A7A64
 - `da04df8` — 把 SkinLayers 從「示意圖」升級為「超寫實解剖圖」(毛囊/血管/脂肪細胞等,外泌體從表皮滲透)
 - `68c7201` — **手機 RWD 修復**(4 個跑版問題:SkinLayers 標籤疊圖、BrandStory 角印位置、Appointment 浮水印、V3 badge 壓 Header)
 
-## 6. 使用過的技能清單
+## 6. 技能使用總表
 
-| 技能 | 用途 | 次數 |
-|------|------|------|
-| `superpowers:brainstorming` | v3 重設計前的方向腦力激盪,產出 design spec | 1 |
-| `frontend-design:frontend-design` | 反 AI-slop 設計原則(大膽方向、獨特字體、材質紋理) | 2 |
-| `design:design-critique` | 對 v2 做結構化批評,發現「跟原版一樣」的根因 | 1 |
-| `Agent (general-purpose)` | 派代理研究 6 個亞洲奢華美容品牌(Sulwhasoo/Whoo/Tatcha/SK-II/La Mer/Shiseido)產出 1200 字 creative brief | 2 |
+### 6A · 本 session 實際啟用過的(照時間序)
 
-**已載入但本 session 沒完整啟動的(下一階段可用)**:
-- `design:design-system` — 定義/審核 tokens,想擴充設計系統時用
-- `design:accessibility-review` — WCAG 2.1 AA 審核
-- `design:ux-copy` — UX 文案審查
-- `marketing:brand-review` — 品牌聲調審核
-- `marketing:seo-audit` — SEO 審核
-- `chrome-devtools-mcp:*` — 瀏覽器除錯(部署後 a11y / LCP)
-- `vercel:nextjs` / `vercel:react-best-practices` / `vercel:shadcn`
-- `superpowers:verification-before-completion` — 宣告「完成」前強制驗證(非常重要,本 session 有用)
-- `superpowers:writing-plans` — 多步驟任務前寫計畫
-- `commit-commands:commit` — 格式化 commit(本 session 手動寫 HEREDOC,可用此自動)
-- `anthropic-skills:canvas-design` — 畫視覺 moodboard
-- `playground:playground` — 做互動 HTML 原型
+| # | 技能 | 什麼情境下用 | 產出 |
+|---|------|-------------|------|
+| 1 | `superpowers:brainstorming` | v3 重設計前,要把晨睿的情緒錨點轉成可執行的 design spec | 9-section narrative arc、三大招牌(朱砂/金箔/宣紙)、design spec 檔案存到 `docs/superpowers/specs/` |
+| 2 | `frontend-design:frontend-design` | v3 設計方向定調(反 AI-slop、大膽視覺詞彙、材質紋理) | 決定用 Cormorant Garamond italic display + Noto Serif TC + 朱砂紅 accent |
+| 3 | `design:design-critique` | v2 被晨睿說「跟原版一樣」時,做結構化批評找根因 | 診斷出 v2 失敗點:只做參數微調沒換視覺詞彙 |
+| 4 | `Agent (general-purpose)` x2 | (a) 研究 Claude Code 設計技能 GitHub 倉庫排名 (b) 深度研究 6 個亞洲奢華美容品牌產出 1200 字 creative brief | Oriental Atelier 一句話定位、8 色 tokens、9 section brief、3 wow moments |
+
+### 6B · 下一階段高機率會用到的技能(依任務分類)
+
+#### 🎨 視覺迭代(最常用)
+| 技能 | 觸發時機 |
+|------|---------|
+| `superpowers:brainstorming` | **任何新 section 或大改前**,強制先叫 |
+| `frontend-design:frontend-design` | **寫任何 UI code 前**,強制先叫(CLAUDE.md 規定) |
+| `design:design-critique` | 每做完一個 section 跑一次,找結構問題 |
+| `design:design-system` | 要擴充 tokens、審查命名一致性 |
+| `design:accessibility-review` | 部署前跑 WCAG 2.1 AA 審核 |
+| `design:design-handoff` | 要交接給其他工程師時寫規格 |
+| `anthropic-skills:canvas-design` | 畫視覺 moodboard / 靜態美術稿(非網站) |
+| `theme-factory` | Artifact 主題化(slides / docs) |
+| `playground:playground` | 做互動 HTML 原型測概念 |
+
+#### ✍️ 文案 / 內容
+| 技能 | 觸發時機 |
+|------|---------|
+| `design:ux-copy` | microcopy / 錯誤訊息 / 空狀態 / CTA 文案審 |
+| `marketing:brand-review` | 任何文案定稿前,檢查是否符合「奢華療癒」聲調 |
+| `marketing:draft-content` | 寫部落格 / 新聞 / EDM 初稿 |
+| `marketing:content-creation` | 跨通路內容(IG / FB / email) |
+| `marketing:seo-audit` | 想衝外泌體關鍵字流量時 |
+| `marketing:email-sequence` | 做預約後的自動 EDM 流程(提醒 / 追蹤 / 回購) |
+
+#### 🧱 代碼實作與審查
+| 技能 | 觸發時機 |
+|------|---------|
+| `vercel:nextjs` | Next.js App Router 深度問題 |
+| `vercel:react-best-practices` | **編輯多個 TSX 後自動 review 最佳實踐** |
+| `vercel:shadcn` | 要加 shadcn/ui 元件 |
+| `vercel:turbopack` | 優化 bundle / HMR 速度 |
+| `coderabbit:code-review` | PR review 時用 AI 審 |
+| `pr-review-toolkit:review-pr` | 多 agent 協同 PR review |
+| `simplify` | 重構 / 簡化最近寫的 code |
+
+#### 🚀 部署與 DevOps
+| 技能 | 觸發時機 |
+|------|---------|
+| `vercel:deploy` | CLI 部署(Vercel CLI 要先裝:`npm i -g vercel`) |
+| `vercel:deployments-cicd` | 管理部署、promote production、rollback |
+| `vercel:env` / `env-vars` | 環境變數管理 |
+| `vercel:status` | 看當前專案部署狀態 |
+| `vercel:verification` | 全流程驗證(推斷 + 檢查) |
+| `vercel:bootstrap` | 初次連結 Vercel 資源(已連好) |
+
+#### 🔍 除錯與效能
+| 技能 | 觸發時機 |
+|------|---------|
+| `chrome-devtools-mcp:chrome-devtools` | 透過 DevTools MCP 做瀏覽器自動化除錯 |
+| `chrome-devtools-mcp:debug-optimize-lcp` | 粒子/影片做完後測 LCP |
+| `chrome-devtools-mcp:a11y-debugging` | a11y 即時除錯 |
+| `chrome-devtools-mcp:troubleshooting` | 連線 / target 問題 |
+| `superpowers:systematic-debugging` | 遇到 bug / 測試失敗前,系統化除錯流程 |
+
+#### 🔁 工作流程(強制必讀)
+| 技能 | 觸發時機 |
+|------|---------|
+| `superpowers:using-superpowers` | **每次 session 開始**,建立技能使用習慣 |
+| `superpowers:writing-plans` | 多步驟任務前先寫計畫(例:merge v3 到 production) |
+| `superpowers:executing-plans` | 依計畫執行 |
+| `superpowers:verification-before-completion` | **宣告「完成」前強制驗證**——本 session 學到的血淚(我之前沒用導致晨睿要親自打開網站才發現問題) |
+| `superpowers:test-driven-development` | 寫 feature / bugfix 前 TDD 先行 |
+| `superpowers:requesting-code-review` | 完成主要 feature、merge 前 |
+| `superpowers:receiving-code-review` | 收到 review 後處理流程 |
+| `superpowers:dispatching-parallel-agents` | 2+ 獨立任務需要並行時 |
+| `superpowers:using-git-worktrees` | 隔離實驗(例如試 merge 到 master) |
+| `superpowers:finishing-a-development-branch` | 決定 merge 策略時 |
+
+#### 📝 Git / Commit
+| 技能 | 觸發時機 |
+|------|---------|
+| `commit-commands:commit` | 格式化 commit 訊息(比手動 HEREDOC 快) |
+| `commit-commands:commit-push-pr` | 一鍵 commit + push + 開 PR |
+| `commit-commands:clean_gone` | 清理已刪除的遠端分支 |
+
+#### 📊 上線後分析(未來幾週內)
+| 技能 | 觸發時機 |
+|------|---------|
+| `sentry:sentry-sdk-setup` | 加錯誤追蹤 |
+| `sentry:sentry-workflow` | 用 Sentry 修生產問題 |
+| `posthog:instrument-integration` | 首次裝 PostHog SDK |
+| `posthog:instrument-product-analytics` | 追使用者行為(預約轉換率) |
+| `posthog:instrument-error-tracking` | 錯誤事件 |
+| `posthog:instrument-feature-flags` | Feature flag / A/B test |
+| `posthog:experiments` | 做 Hero CTA A/B 測試 |
+
+#### 🎬 媒體素材
+| 技能 | 觸發時機 |
+|------|---------|
+| `remotion-best-practices` | 要更新 `public/videos/hero-ambient.mp4`(Hero 底層 Remotion video),或做新的 ambient loop |
+
+#### 🗄️ CMS / 後端(若晨睿決定要做)
+| 技能 | 觸發時機 |
+|------|---------|
+| `sanity-plugin:sanity-best-practices` | 若要接 Sanity CMS 讓晨睿自己改文案 |
+| `sanity-plugin:content-modeling-best-practices` | 結構化內容建模 |
+| `sanity-plugin:seo-aeo-best-practices` | metadata / sitemap / robots.txt |
+| `supabase:supabase` | 若預約表單要接 DB(現有 `src/app/api/` 結構支援) |
+| `vercel:vercel-storage` | Blob / Edge Config / Neon Postgres 儲存 |
+
+#### 🔐 認證
+| 技能 | 觸發時機 |
+|------|---------|
+| `vercel:auth` | 若要加會員系統(Clerk / Descope / Auth.js) |
+
+### 6C · 特殊情境才用的
+
+| 技能 | 情境 |
+|------|------|
+| `figma:figma-use` + 其他 `figma:*` | 若晨睿之後提供 Figma 設計稿(目前沒有) |
+| `stripe:stripe-best-practices` | 若要做線上付費(目前只是預約不收款) |
+| `sumup:sumup` | 若要整合 SumUp 線下刷卡(台灣市場少用) |
+| `line-send-message` / `telegram-send-message` | 預約成功後自動發 LINE 通知給晨睿 |
+| `Notion:*` | 若要跟晨睿的 Notion 工作區整合(進度表 / 任務) |
+| `slack:*` | 若公司有 Slack(他沒提過) |
+| `mintlify:mintlify` | 若要做正式 API 文件站 |
+| `coderabbit:autofix` | 讓 CodeRabbit 自動修 review comments |
+| `feature-dev:feature-dev` | Guided feature development 流程 |
+| `claude-md-management:revise-claude-md` / `claude-md-improver` | 更新 CLAUDE.md 記錄本 session 學到的東西 |
+| `anthropic-skills:consolidate-memory` | 整合 memory files |
+| `superpowers:writing-skills` | 若要自己寫新技能 |
+
+### 6D · 用不到的(明確排除)
+
+以下技能跟 I ME 網站**無關**,新 Claude 看到可直接跳過:
+- `zoom-plugin:*`(Zoom 相關開發)
+- `aws-serverless:*` / `deploy-on-aws:*` / `migration-to-aws:*`(AWS,我們用 Vercel)
+- `rc:*`(RevenueCat,訂閱商品管理)
+- `wix:*`(Wix 平台開發,我們用 Next.js)
+- `sourcegraph:*`(程式碼搜尋平台)
+- `pagerduty:*`(值班管理)
+- `pinecone:*`(向量資料庫)
+- `huggingface-skills:*`(ML 模型訓練)
+- `postman:*`(API 測試,目前沒自建 API)
+- `data:*`(SQL / Python 分析)
+- `product-management:*`(產品管理流程,晨睿是唯一決策者)
+- `sales:*`(銷售流程,跟網站無關)
+- `atlassian:*`(Jira / Confluence)
+- `plugin-dev:*` / `hookify:*`(Claude Code 外掛開發)
+- `adspirer-ads-agent:*`(Google Ads)
+- `amazon-location-service:*`(地圖服務)
+
+### 6E · 關鍵規則
+
+1. **寫任何 code 前先 `superpowers:brainstorming` 跟 `frontend-design:frontend-design`**——CLAUDE.md 強制
+2. **宣告「完成」前先 `superpowers:verification-before-completion`**——本 session 血淚教訓
+3. **多個並行獨立任務就 `superpowers:dispatching-parallel-agents`**——本 session 用過 Agent x2 研究 brief
 
 ## 7. 檔案結構(v3 相關)
 
