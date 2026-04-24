@@ -179,7 +179,8 @@ export function ProductV3() {
                 <p className="font-sans-tc text-paper-cream/55 text-xs mb-2 tracking-wider">
                   {spec.label}
                 </p>
-                <p className="font-serif-tc text-paper-cream text-3xl font-medium leading-none">
+                {/* Bodoni Moda statement face — pro-max Luxury Minimalist recommendation */}
+                <p className="font-statement text-paper-cream text-4xl md:text-5xl font-medium leading-[0.95] tracking-tight">
                   {spec.value}
                 </p>
                 {spec.unit && (

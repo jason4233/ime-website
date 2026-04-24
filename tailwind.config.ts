@@ -93,6 +93,9 @@ const config: Config = {
         body: ["var(--font-body)", "sans-serif"],
         elegant: ["var(--font-elegant)", "serif"],
         handwriting: ['"ChenYuluoyan"', '"Noto Serif TC"', "serif"],
+        // v3 Luxury Minimalist statement serif — Vogue/Harper's Bazaar
+        // 用在巨型數字(2,000 億 / +47% / 76.8–99.4nm)最強衝擊
+        statement: ["var(--font-statement)", "Bodoni Moda", "serif"],
       },
       fontSize: {
         // 標題系統

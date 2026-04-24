@@ -185,25 +185,46 @@ export function BrandStoryV3() {
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 className="relative"
               >
-                {/* 章節編號 */}
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.15 }}
-                  className="font-serif-tc text-vermillion/80 text-sm tracking-[0.55em] mb-6"
+                {/* Editorial 章節:巨型 Roman numeral(Bodoni Moda italic)+ 中文章名 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.9, delay: 0.15 }}
+                  className="flex items-end gap-5 mb-8"
                 >
-                  {act.chapter}
-                </motion.p>
+                  {/* Roman numeral 做為 editorial 章節大數 */}
+                  <span
+                    className="font-statement italic text-vermillion/25 leading-none select-none"
+                    style={{ fontSize: "clamp(4rem, 8vw, 7rem)", letterSpacing: "-0.04em" }}
+                    aria-hidden
+                  >
+                    {["I", "II", "III"][activeAct]}
+                  </span>
+                  <span className="font-serif-tc text-vermillion/85 text-sm tracking-[0.55em] pb-3">
+                    {act.chapter}
+                  </span>
+                </motion.div>
 
-                {/* 英文 whisper */}
-                <motion.p
+                {/* Pull-quote whisper — editorial grid 手法:超大裝飾引號 + italic 拉到頁邊 */}
+                <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.9, delay: 0.25 }}
-                  className="font-elegant italic text-ink/55 text-[clamp(1rem,1.5vw,1.25rem)] tracking-wide mb-12"
+                  className="relative mb-12 pl-8 md:pl-12 border-l-2 border-leaf-gold/40"
                 >
-                  &ldquo; {act.whisper} &rdquo;
-                </motion.p>
+                  <span
+                    className="font-statement italic text-vermillion/35 absolute -left-1 md:-left-2 -top-2 leading-none select-none"
+                    style={{ fontSize: "clamp(3rem, 5vw, 4.5rem)" }}
+                    aria-hidden
+                  >
+                    &ldquo;
+                  </span>
+                  <p
+                    className="font-elegant italic text-ink/65 text-[clamp(1.05rem,1.6vw,1.35rem)] tracking-wide leading-relaxed"
+                  >
+                    {act.whisper}
+                  </p>
+                </motion.div>
 
                 {/* 主標 */}
                 <motion.h2

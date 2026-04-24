@@ -162,10 +162,11 @@ export function BeforeAfterV3() {
             28-Day Hydration Index
           </p>
           <div className="flex items-baseline justify-center gap-2">
-            <span className="font-elegant italic text-leaf-gold text-8xl md:text-9xl leading-none">
+            {/* Bodoni Moda — Vogue magazine level display number */}
+            <span className="font-statement italic text-leaf-gold text-[9rem] md:text-[12rem] leading-[0.85] font-semibold tracking-tight">
               +{count}
             </span>
-            <span className="font-serif-tc text-leaf-gold text-5xl leading-none">%</span>
+            <span className="font-statement text-leaf-gold text-6xl leading-none font-medium">%</span>
           </div>
           <motion.div
             initial={{ scaleX: 0 }}

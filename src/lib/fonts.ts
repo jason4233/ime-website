@@ -1,4 +1,4 @@
-import { Noto_Serif_TC, Noto_Sans_TC, Playfair_Display, Inter, Cormorant_Garamond } from "next/font/google";
+import { Noto_Serif_TC, Noto_Sans_TC, Playfair_Display, Inter, Cormorant_Garamond, Bodoni_Moda } from "next/font/google";
 
 export const notoSerifTC = Noto_Serif_TC({
   subsets: ["latin"],
@@ -34,5 +34,15 @@ export const cormorantGaramond = Cormorant_Garamond({
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
   variable: "--font-elegant",
+  display: "swap",
+});
+
+// Bodoni Moda — Vogue/Harper's Bazaar 級 display serif
+// pro-max Luxury Minimalist pairing 推薦 → 做巨型數字(2,000 億 / +47% / 76.8nm)
+export const bodoniModa = Bodoni_Moda({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  variable: "--font-statement",
   display: "swap",
 });

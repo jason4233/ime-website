@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond } from "@/lib/fonts";
+import { notoSerifTC, notoSansTC, playfairDisplay, inter, cormorantGaramond, bodoniModa } from "@/lib/fonts";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import dynamic from "next/dynamic";
@@ -104,6 +104,7 @@ export default function RootLayout({
     playfairDisplay.variable,
     inter.variable,
     cormorantGaramond.variable,
+    bodoniModa.variable, // v3 statement font for luxury numbers (Vogue/Harper's Bazaar level)
   ].join(" ");
 
   return (
