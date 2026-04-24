@@ -1,15 +1,70 @@
 # I ME 外泌體美容品牌網站 — Session Handoff
-**最後更新**: 2026-04-22 · commit `68c7201`
+**最後更新**: 2026-04-22 · commit `06a0a06`(session 7 次 handoff doc 更新)
 **分支**: `feature/visual-overhaul-v2`
 
 ---
 
 ## 🎯 開場 prompt(貼給新電腦的 Claude Code)
 
-> 你現在接手一個 Next.js 網站專案。這個 session 要連續工作 24 小時。
-> 完整上下文在 `docs/superpowers/HANDOFF.md`,**請先 `cat` 這個檔案讀完再開始**。
-> 任何實作前必須先 invoke `superpowers:brainstorming` 跟 `frontend-design:frontend-design` 技能。
+> 你接手一個 Next.js 網站專案,要連續工作 24 小時。
+> **Step 1 先裝技能**:跑 `docs/superpowers/HANDOFF.md` section 0 的 `npx skills add` 指令。
+> **Step 2 讀 handoff**:`cat docs/superpowers/HANDOFF.md` 全部讀完。
+> **Step 3 確認技能可用**:開新 session 或等當前 session 刷新 skill registry,確認 `ui-ux-pro-max`、`superpowers:brainstorming`、`frontend-design:frontend-design` 都在 skill list 裡。
+> **Step 4 報告接手狀態**給晨睿後等指令。
 > 使用者叫晨睿(繁體中文溝通)。專案路徑 `C:\Users\ASUS\Desktop\i me網站\ime-website\`。
+> 任何實作前必須先 invoke `superpowers:brainstorming` + `frontend-design:frontend-design` + `ui-ux-pro-max`。
+
+---
+
+## 0. 接手前必做 · 安裝技能
+
+### 0A · 確認 Claude Code 已裝
+如果是全新電腦,先裝 Claude Code:https://claude.com/download-claude-code
+登入你的 Anthropic 帳號後會自動載入 `claude-plugins-official` marketplace(含 superpowers / frontend-design / design / marketing / vercel 等)。
+
+### 0B · 必裝第三方技能(複製下面整段貼進 terminal)
+
+```bash
+# UI/UX Pro Max — 161 palettes / 57 font pairings / 50+ styles / 99 UX guidelines
+# 來源:nextlevelbuilder (131K installs),luxury 品牌網站必備
+npx skills add nextlevelbuilder/ui-ux-pro-max-skill@ui-ux-pro-max -g -y
+
+# (前一台已裝,新電腦需重裝一次。-g 全域、-y 跳過確認)
+```
+
+### 0C · 驗證 skill registry(開新 Claude Code session 後 check)
+
+以下技能**必須**在你的 skill list 裡(開 session 會自動列出):
+
+**核心設計(5)**
+- [ ] `ui-ux-pro-max`  ← 剛裝的那個,沒看到代表安裝失敗
+- [ ] `superpowers:brainstorming`
+- [ ] `frontend-design:frontend-design`
+- [ ] `design:design-critique`
+- [ ] `design:design-system`
+
+**代碼 / 部署(4)**
+- [ ] `vercel:nextjs`
+- [ ] `vercel:react-best-practices`
+- [ ] `superpowers:verification-before-completion`
+- [ ] `commit-commands:commit`
+
+**除錯(2)**
+- [ ] `chrome-devtools-mcp:chrome-devtools`
+- [ ] `superpowers:systematic-debugging`
+
+如果有任何一項缺失,告訴晨睿:「我需要先裝 `<skill name>` 才能繼續」。
+
+### 0D · Repo 同步
+
+```bash
+cd "C:/Users/ASUS/Desktop/i me網站/ime-website"   # (或新電腦的對應路徑)
+git fetch --all
+git checkout feature/visual-overhaul-v2
+git pull                                           # 同步到最新 commit
+git log --oneline -5                               # 確認最新是 06a0a06 或更新
+git status                                         # 應該 clean
+```
 
 ---
 
