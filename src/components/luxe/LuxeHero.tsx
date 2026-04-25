@@ -14,9 +14,17 @@ import { motion } from "framer-motion";
 //   Style "Liquid Glass" — premium luxury portfolios
 //   Particles are mathematically positioned to FORM a bottle shape
 //   on idle, then disperse on mouse move (cause-effect motion)
+//   ───────────────────────────────────────────────────────────
+//   v3 upgrades (Apple/DEV21ST quality):
+//   • Custom GLSL shader: per-particle size + soft circular sprites
+//   • Depth-based fade: back particles tint cool, front pop hot
+//   • Volumetric inner glow sphere (additive, sits inside silhouette)
+//   • Breathing pulse on whole group
+//   • Liquid drip stream — subset flows from cap downward inside
 // ═══════════════════════════════════════════════════════════════
 
 const PARTICLE_COUNT = 8000;
+const DRIP_COUNT = 220; // subset that becomes a slow vertical flow
 
 // Bottle radius profile — piecewise smooth curve (called for arbitrary y)
 function bottleRadius(y: number): number {
@@ -77,16 +85,68 @@ function bottlePositions(count: number): Float32Array {
   return pos;
 }
 
+// ─── Custom GLSL shader for points ──────────────────────────────
+// Per-particle size attribute, soft circular alpha mask, depth-aware
+// HDR color (>1.0 still tonemaps via ACES for cinematic glow).
+const POINT_VERTEX_SHADER = /* glsl */ `
+  attribute float aSize;
+  attribute vec3 aColor;
+  varying vec3 vColor;
+  varying float vDepth;
+  uniform float uTime;
+  uniform float uPixelRatio;
+  uniform float uPulse;
+
+  void main() {
+    vColor = aColor;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    // depth in view space, normalized roughly to [0..1] for our camera
+    vDepth = clamp((-mvPosition.z - 2.0) / 4.0, 0.0, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    // size attenuation by view-space distance (mimics sizeAttenuation)
+    float perspective = 360.0 / -mvPosition.z;
+    gl_PointSize = aSize * uPixelRatio * perspective * uPulse;
+  }
+`;
+
+const POINT_FRAGMENT_SHADER = /* glsl */ `
+  varying vec3 vColor;
+  varying float vDepth;
+
+  void main() {
+    // soft circular alpha mask (procedural, no texture)
+    vec2 c = gl_PointCoord - vec2(0.5);
+    float d = length(c);
+    if (d > 0.5) discard;
+    // 2-stop smoothstep: hot core, soft halo
+    float core = smoothstep(0.5, 0.0, d);
+    float halo = smoothstep(0.5, 0.18, d);
+    float alpha = core * 0.55 + halo * 0.45;
+
+    // depth tint: front particles stay golden, back particles cool to violet
+    vec3 cool = vec3(0.45, 0.30, 0.85);
+    vec3 col = mix(vColor, cool, vDepth * 0.55);
+    // slight hot core boost
+    col += vec3(0.6, 0.4, 0.1) * pow(core, 4.0) * 0.6;
+
+    gl_FragColor = vec4(col, alpha);
+  }
+`;
+
 function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
   const ref = useRef<THREE.Points>(null);
   const groupRef = useRef<THREE.Group>(null);
-  const { mouse, viewport } = useThree();
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+  const innerGlowRef = useRef<THREE.Mesh>(null);
+  const { mouse, viewport, gl } = useThree();
 
-  // Pre-compute target (bottle) and seed (random sphere) positions
-  const { targets, seeds, sizes } = useMemo(() => {
+  // Pre-compute target (bottle) and seed (random sphere) positions + per-particle attributes
+  const { targets, seeds, sizes, isDrip, dripPhase } = useMemo(() => {
     const targets = bottlePositions(PARTICLE_COUNT);
     const seeds = new Float32Array(PARTICLE_COUNT * 3);
     const sizes = new Float32Array(PARTICLE_COUNT);
+    const isDrip = new Uint8Array(PARTICLE_COUNT);
+    const dripPhase = new Float32Array(PARTICLE_COUNT);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       // Random points in sphere (uniform via cube-rejection)
       let x, y, z;
@@ -98,27 +158,72 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
       seeds[i * 3 + 0] = x;
       seeds[i * 3 + 1] = y;
       seeds[i * 3 + 2] = z;
-      sizes[i] = 0.4 + Math.random() * 0.6;
+      // Per-particle size (small majority + a few big "highlights")
+      const r = Math.random();
+      sizes[i] = r > 0.96 ? 7.5 + Math.random() * 3.5 // sparkle highlight
+              : r > 0.75 ? 3.5 + Math.random() * 2.0  // mid
+              : 1.6 + Math.random() * 1.4;            // base population
+      // Mark drip particles (last DRIP_COUNT indices)
+      isDrip[i] = i >= PARTICLE_COUNT - DRIP_COUNT ? 1 : 0;
+      dripPhase[i] = Math.random();
     }
-    return { targets, seeds, sizes };
+    return { targets, seeds, sizes, isDrip, dripPhase };
   }, []);
 
   // Animated buffer — interpolated each frame
   const positions = useMemo(() => new Float32Array(targets), [targets]);
+
+  // Shader uniforms
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uPixelRatio: { value: Math.min(window.devicePixelRatio, 1.5) },
+      uPulse: { value: 1.0 },
+    }),
+    []
+  );
+
+  // Color buffer (HDR bright gold — drives vColor in shader)
+  const colors = useMemo(() => {
+    const c = new Float32Array(PARTICLE_COUNT * 3);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      // Slight per-particle hue jitter so the field isn't monotone
+      const tint = 0.85 + Math.random() * 0.3;
+      c[i * 3] = 1.6 * tint;
+      c[i * 3 + 1] = 1.05 * tint;
+      c[i * 3 + 2] = 0.32 + Math.random() * 0.18;
+    }
+    return c;
+  }, []);
+
+  useEffect(() => {
+    uniforms.uPixelRatio.value = Math.min(gl.getPixelRatio(), 1.5);
+  }, [gl, uniforms]);
 
   useFrame((state, delta) => {
     if (!ref.current) return;
     const t = state.clock.getElapsedTime();
     const power = mousePower.current; // 0 = bottle, 1 = dispersed
     const arr = ref.current.geometry.attributes.position.array as Float32Array;
-    const colors = ref.current.geometry.attributes.color?.array as Float32Array;
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const i3 = i * 3;
-      // Interpolate target ↔ seed using mousePower
-      const tx = targets[i3] * (1 - power) + seeds[i3] * power;
-      const ty = targets[i3 + 1] * (1 - power) + seeds[i3 + 1] * power;
-      const tz = targets[i3 + 2] * (1 - power) + seeds[i3 + 2] * power;
+      let tx = targets[i3] * (1 - power) + seeds[i3] * power;
+      let ty = targets[i3 + 1] * (1 - power) + seeds[i3 + 1] * power;
+      let tz = targets[i3 + 2] * (1 - power) + seeds[i3 + 2] * power;
+
+      // Liquid drip: some particles flow from cap (y≈1.4) downward inside the bottle.
+      // They cycle so the stream is continuous. Power dampens the drip during dispersion.
+      if (isDrip[i] === 1 && power < 0.4) {
+        const cycle = ((t * 0.32 + dripPhase[i]) % 1.0); // 0..1
+        const dy = 1.40 - cycle * 2.85; // cap → bottom
+        // narrow column around axis, wobbling slightly
+        const wobble = 0.06 * Math.sin(t * 1.4 + i);
+        const wobble2 = 0.06 * Math.cos(t * 1.1 + i * 0.7);
+        tx = wobble * (1 - power);
+        ty = dy * (1 - power) + ty * power;
+        tz = wobble2 * (1 - power);
+      }
 
       // Idle drift (subtle breathing)
       const breath = 0.012 * Math.sin(t * 0.7 + i * 0.013);
@@ -128,21 +233,23 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
       arr[i3] += (tx + breath - arr[i3]) * 0.06;
       arr[i3 + 1] += (ty + swirl - arr[i3 + 1]) * 0.06;
       arr[i3 + 2] += (tz - arr[i3 + 2]) * 0.06;
-
-      // Color: bright luminous gold (HDR — values >1 trigger bloom)
-      // Surface particles get full luminance, deeper ones tinted toward warm purple.
-      if (colors) {
-        const r = Math.sqrt(arr[i3] ** 2 + arr[i3 + 1] ** 2 + arr[i3 + 2] ** 2);
-        const norm = Math.min(1, r / 2.2);
-        // bright gold (above 1.0 = HDR for bloom) → warm rose at periphery
-        colors[i3] =     1.6 - norm * 0.4;
-        colors[i3 + 1] = 1.1 - norm * 0.25;
-        colors[i3 + 2] = 0.35 + norm * 0.6;
-      }
     }
     ref.current.geometry.attributes.position.needsUpdate = true;
-    if (ref.current.geometry.attributes.color)
-      ref.current.geometry.attributes.color.needsUpdate = true;
+
+    // Shader time uniform + breathing pulse (1.00 ↔ 1.025, ~4s period)
+    if (matRef.current) {
+      matRef.current.uniforms.uTime.value = t;
+      matRef.current.uniforms.uPulse.value =
+        1.0 + Math.sin(t * (Math.PI * 2 / 4.0)) * 0.025;
+    }
+
+    // Inner volumetric glow — gentle scale & opacity throb
+    if (innerGlowRef.current) {
+      const s = 1.0 + Math.sin(t * 0.9) * 0.04;
+      innerGlowRef.current.scale.setScalar(s);
+      const mat = innerGlowRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.30 + Math.sin(t * 0.6) * 0.06;
+    }
 
     // Rotate the whole group very slowly + subtle parallax to mouse
     if (groupRef.current) {
@@ -152,22 +259,40 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
         (mouse.y * 0.15) / Math.max(1, viewport.factor),
         0.03
       );
+      // Gentle group-scale breathing (2% over 4s) — feels alive
+      const groupPulse = 1.0 + Math.sin(t * 0.5) * 0.02;
+      groupRef.current.scale.setScalar(groupPulse);
     }
   });
 
-  // Color buffer (initialized once) — HDR bright gold for bloom
-  const colors = useMemo(() => {
-    const c = new Float32Array(PARTICLE_COUNT * 3);
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      c[i * 3] = 1.6;
-      c[i * 3 + 1] = 1.1;
-      c[i * 3 + 2] = 0.35;
-    }
-    return c;
-  }, []);
-
   return (
     <group ref={groupRef}>
+      {/* Volumetric inner glow — sphere INSIDE the bottle silhouette,
+          additive blending → reads as warm light leaking through liquid. */}
+      <mesh ref={innerGlowRef} position={[0, -0.1, 0]}>
+        <sphereGeometry args={[0.34, 24, 24]} />
+        <meshBasicMaterial
+          color="#FFC857"
+          transparent
+          opacity={0.32}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Secondary outer halo — broader, dimmer, gives volumetric feel */}
+      <mesh position={[0, -0.1, 0]}>
+        <sphereGeometry args={[0.65, 20, 20]} />
+        <meshBasicMaterial
+          color="#CA8A04"
+          transparent
+          opacity={0.08}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
       <points ref={ref}>
         <bufferGeometry>
           <bufferAttribute
@@ -177,24 +302,24 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
             itemSize={3}
           />
           <bufferAttribute
-            attach="attributes-color"
+            attach="attributes-aColor"
             count={PARTICLE_COUNT}
             array={colors}
             itemSize={3}
           />
           <bufferAttribute
-            attach="attributes-size"
+            attach="attributes-aSize"
             count={PARTICLE_COUNT}
             array={sizes}
             itemSize={1}
           />
         </bufferGeometry>
-        <pointsMaterial
-          size={0.028}
-          sizeAttenuation
-          vertexColors
+        <shaderMaterial
+          ref={matRef}
+          vertexShader={POINT_VERTEX_SHADER}
+          fragmentShader={POINT_FRAGMENT_SHADER}
+          uniforms={uniforms}
           transparent
-          opacity={0.95}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
           toneMapped={false}
