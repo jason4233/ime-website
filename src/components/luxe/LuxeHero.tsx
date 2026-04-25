@@ -1,8 +1,6 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, Bloom, Vignette, ChromaticAberration } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
 import { Sparkles } from "@react-three/drei";
 import { Suspense, useMemo, useRef, useEffect, useState } from "react";
 import * as THREE from "three";
@@ -248,25 +246,8 @@ function GoldGlow() {
   );
 }
 
-function HeroPostFX() {
-  return (
-    <EffectComposer multisampling={0} enableNormalPass={false}>
-      <Bloom
-        intensity={1.4}
-        luminanceThreshold={0.4}
-        luminanceSmoothing={0.85}
-        mipmapBlur
-      />
-      <ChromaticAberration
-        offset={new THREE.Vector2(0.0008, 0.0006)}
-        radialModulation={false}
-        modulationOffset={0}
-        blendFunction={BlendFunction.NORMAL}
-      />
-      <Vignette eskil={false} offset={0.3} darkness={0.85} />
-    </EffectComposer>
-  );
-}
+// Postprocessing removed — caused React #329 hydration error in production.
+// Using HDR vertex colors + Sparkles + tonemapping for glow instead.
 
 interface HeroData {
   headline?: string | null;
@@ -353,7 +334,6 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
             <Suspense fallback={null}>
               <GoldGlow />
               <ParticleBottle mousePower={mousePower} />
-              <HeroPostFX />
             </Suspense>
           </Canvas>
         </div>

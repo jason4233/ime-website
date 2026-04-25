@@ -2,7 +2,6 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, ContactShadows } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { Suspense, useRef } from "react";
 import * as THREE from "three";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -146,17 +145,6 @@ function VialScene() {
         far={2}
         color="#000000"
       />
-
-      {/* Bloom on glass + emissive liquid */}
-      <EffectComposer multisampling={0} enableNormalPass={false}>
-        <Bloom
-          intensity={1.2}
-          luminanceThreshold={0.5}
-          luminanceSmoothing={0.85}
-          mipmapBlur
-        />
-        <Vignette eskil={false} offset={0.4} darkness={0.7} />
-      </EffectComposer>
     </>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -170,16 +169,6 @@ function MoleculeScene() {
       <ExosomeMembrane />
       <SurfaceMarkers />
       <CargoOrbits />
-
-      <EffectComposer multisampling={0} enableNormalPass={false}>
-        <Bloom
-          intensity={1.6}
-          luminanceThreshold={0.35}
-          luminanceSmoothing={0.85}
-          mipmapBlur
-        />
-        <Vignette eskil={false} offset={0.4} darkness={0.7} />
-      </EffectComposer>
     </>
   );
 }
