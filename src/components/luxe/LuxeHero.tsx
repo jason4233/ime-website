@@ -18,13 +18,16 @@ import { motion } from "framer-motion";
 //   v3 upgrades (Apple/DEV21ST quality):
 //   • Custom GLSL shader: per-particle size + soft circular sprites
 //   • Depth-based fade: back particles tint cool, front pop hot
-//   • Volumetric inner glow sphere (additive, sits inside silhouette)
 //   • Breathing pulse on whole group
-//   • Liquid drip stream — subset flows from cap downward inside
+//   ───────────────────────────────────────────────────────────
+//   v4: Removed liquid drip stream — it clustered ~220 particles
+//   along the central axis and rendered as a solid milky-white
+//   vertical stripe that covered the bottle silhouette and made
+//   the headline unreadable. All particles now settle into the
+//   ampoule silhouette uniformly.
 // ═══════════════════════════════════════════════════════════════
 
 const PARTICLE_COUNT = 8000;
-const DRIP_COUNT = 220; // subset that becomes a slow vertical flow
 
 // Bottle radius profile — piecewise smooth curve (called for arbitrary y)
 function bottleRadius(y: number): number {
@@ -142,12 +145,10 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
   const { mouse, viewport, gl } = useThree();
 
   // Pre-compute target (bottle) and seed (random sphere) positions + per-particle attributes
-  const { targets, seeds, sizes, isDrip, dripPhase } = useMemo(() => {
+  const { targets, seeds, sizes } = useMemo(() => {
     const targets = bottlePositions(PARTICLE_COUNT);
     const seeds = new Float32Array(PARTICLE_COUNT * 3);
     const sizes = new Float32Array(PARTICLE_COUNT);
-    const isDrip = new Uint8Array(PARTICLE_COUNT);
-    const dripPhase = new Float32Array(PARTICLE_COUNT);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       // Random points in sphere (uniform via cube-rejection)
       let x, y, z;
@@ -164,11 +165,8 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
       sizes[i] = r > 0.96 ? 7.5 + Math.random() * 3.5 // sparkle highlight
               : r > 0.75 ? 3.5 + Math.random() * 2.0  // mid
               : 1.6 + Math.random() * 1.4;            // base population
-      // Mark drip particles (last DRIP_COUNT indices)
-      isDrip[i] = i >= PARTICLE_COUNT - DRIP_COUNT ? 1 : 0;
-      dripPhase[i] = Math.random();
     }
-    return { targets, seeds, sizes, isDrip, dripPhase };
+    return { targets, seeds, sizes };
   }, []);
 
   // Animated buffer — interpolated each frame
@@ -209,22 +207,9 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const i3 = i * 3;
-      let tx = targets[i3] * (1 - power) + seeds[i3] * power;
-      let ty = targets[i3 + 1] * (1 - power) + seeds[i3 + 1] * power;
-      let tz = targets[i3 + 2] * (1 - power) + seeds[i3 + 2] * power;
-
-      // Liquid drip: some particles flow from cap (y≈1.4) downward inside the bottle.
-      // They cycle so the stream is continuous. Power dampens the drip during dispersion.
-      if (isDrip[i] === 1 && power < 0.4) {
-        const cycle = ((t * 0.32 + dripPhase[i]) % 1.0); // 0..1
-        const dy = 1.40 - cycle * 2.85; // cap → bottom
-        // narrow column around axis, wobbling slightly
-        const wobble = 0.06 * Math.sin(t * 1.4 + i);
-        const wobble2 = 0.06 * Math.cos(t * 1.1 + i * 0.7);
-        tx = wobble * (1 - power);
-        ty = dy * (1 - power) + ty * power;
-        tz = wobble2 * (1 - power);
-      }
+      const tx = targets[i3] * (1 - power) + seeds[i3] * power;
+      const ty = targets[i3 + 1] * (1 - power) + seeds[i3 + 1] * power;
+      const tz = targets[i3 + 2] * (1 - power) + seeds[i3 + 2] * power;
 
       // Idle drift (subtle breathing)
       const breath = 0.012 * Math.sin(t * 0.7 + i * 0.013);
