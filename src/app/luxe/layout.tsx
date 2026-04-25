@@ -1,26 +1,25 @@
 // /luxe — bypass the root marketing chrome (Header/Footer/FloatingCTA/CustomCursor)
-// by hiding them via a body class. This keeps root layout untouched
-// while letting the luxe route own its full canvas.
+// They live as direct children of <body>, sibling to <main>.
 
 export default function LuxeLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* Hide root-level chrome on /luxe — they'd clash with LuxeNav and the
-          Lenis smooth-scroll instance owned by LuxeClient. */}
       <style>{`
-        body > main > header,
-        body > main > footer,
-        body > a[href="#contact"],
-        body > div.fixed.bottom-6,
-        body > .fixed.top-0.left-0.right-0:not(#luxe-nav),
-        body > main > * > header,
-        body > main > * > footer,
-        header.fixed.top-0,
-        footer.bg-night,
-        a.fixed.bottom-6.right-6 {
+        /* Hide everything that root layout renders as siblings of <main> */
+        body > header,
+        body > footer,
+        body > a,
+        body > .fixed:not(#luxe-nav),
+        body > div.fixed,
+        body > section.fixed {
           display: none !important;
         }
+        /* Cancel root smooth-scroll hijack so Lenis (luxe) takes over cleanly */
         html { scroll-behavior: auto !important; }
+        /* Make sure body bg is luxe dark even before client mounts */
+        body { background-color: #0A0A0D !important; color: #F5F0E8 !important; }
+        /* Pad <main> back to 0 — root may have padding for fixed header */
+        body > main { padding: 0 !important; margin: 0 !important; }
       `}</style>
       {children}
     </>
