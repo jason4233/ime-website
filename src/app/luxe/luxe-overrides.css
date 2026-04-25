@@ -1,0 +1,25 @@
+/* Hide v2 root chrome on /luxe pages — applied via html.luxe-mode class */
+html.luxe-mode body > header,
+html.luxe-mode body > footer,
+html.luxe-mode body > a,
+html.luxe-mode body > div.fixed,
+html.luxe-mode body > section.fixed,
+html.luxe-mode body > .fixed:not([data-luxe]) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+html.luxe-mode {
+  background-color: #0A0A0D !important;
+  scroll-behavior: auto !important;
+}
+
+html.luxe-mode body {
+  background-color: #0A0A0D !important;
+  color: #F5F0E8 !important;
+}
+
+html.luxe-mode body > main {
+  padding: 0 !important;
+  margin: 0 !important;
+}
