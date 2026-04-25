@@ -1,6 +1,9 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { EffectComposer, Bloom, Vignette, ChromaticAberration } from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
+import { Sparkles } from "@react-three/drei";
 import { Suspense, useMemo, useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import { motion } from "framer-motion";
@@ -15,7 +18,7 @@ import { motion } from "framer-motion";
 //   on idle, then disperse on mouse move (cause-effect motion)
 // ═══════════════════════════════════════════════════════════════
 
-const PARTICLE_COUNT = 5000;
+const PARTICLE_COUNT = 8000;
 
 // Bottle radius profile — piecewise smooth curve (called for arbitrary y)
 function bottleRadius(y: number): number {
@@ -128,14 +131,15 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
       arr[i3 + 1] += (ty + swirl - arr[i3 + 1]) * 0.06;
       arr[i3 + 2] += (tz - arr[i3 + 2]) * 0.06;
 
-      // Color: gold core → soft purple at edges based on radius
+      // Color: bright luminous gold (HDR — values >1 trigger bloom)
+      // Surface particles get full luminance, deeper ones tinted toward warm purple.
       if (colors) {
         const r = Math.sqrt(arr[i3] ** 2 + arr[i3 + 1] ** 2 + arr[i3 + 2] ** 2);
         const norm = Math.min(1, r / 2.2);
-        // gold #CA8A04 (0.79, 0.54, 0.02) → cell purple #A374B8 (0.64, 0.45, 0.72)
-        colors[i3] = 0.79 - norm * 0.15;
-        colors[i3 + 1] = 0.54 - norm * 0.09;
-        colors[i3 + 2] = 0.02 + norm * 0.7;
+        // bright gold (above 1.0 = HDR for bloom) → warm rose at periphery
+        colors[i3] =     1.6 - norm * 0.4;
+        colors[i3 + 1] = 1.1 - norm * 0.25;
+        colors[i3 + 2] = 0.35 + norm * 0.6;
       }
     }
     ref.current.geometry.attributes.position.needsUpdate = true;
@@ -153,13 +157,13 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
     }
   });
 
-  // Color buffer (initialized once)
+  // Color buffer (initialized once) — HDR bright gold for bloom
   const colors = useMemo(() => {
     const c = new Float32Array(PARTICLE_COUNT * 3);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      c[i * 3] = 0.79;
-      c[i * 3 + 1] = 0.54;
-      c[i * 3 + 2] = 0.02;
+      c[i * 3] = 1.6;
+      c[i * 3 + 1] = 1.1;
+      c[i * 3 + 2] = 0.35;
     }
     return c;
   }, []);
@@ -188,13 +192,14 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
           />
         </bufferGeometry>
         <pointsMaterial
-          size={0.022}
+          size={0.028}
           sizeAttenuation
           vertexColors
           transparent
           opacity={0.95}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
+          toneMapped={false}
         />
       </points>
     </group>
@@ -220,7 +225,46 @@ function GoldGlow() {
         distance={10}
         decay={2}
       />
+
+      {/* Drei Sparkles — drifting gold motes around the bottle for atmosphere */}
+      <Sparkles
+        count={120}
+        scale={[6, 4, 4]}
+        size={4}
+        speed={0.25}
+        opacity={0.9}
+        color="#F0D896"
+        position={[0, 0, 0]}
+      />
+      <Sparkles
+        count={60}
+        scale={[8, 6, 6]}
+        size={2}
+        speed={0.12}
+        opacity={0.6}
+        color="#A374B8"
+      />
     </>
+  );
+}
+
+function HeroPostFX() {
+  return (
+    <EffectComposer multisampling={0} enableNormalPass={false}>
+      <Bloom
+        intensity={1.4}
+        luminanceThreshold={0.4}
+        luminanceSmoothing={0.85}
+        mipmapBlur
+      />
+      <ChromaticAberration
+        offset={new THREE.Vector2(0.0008, 0.0006)}
+        radialModulation={false}
+        modulationOffset={0}
+        blendFunction={BlendFunction.NORMAL}
+      />
+      <Vignette eskil={false} offset={0.3} darkness={0.85} />
+    </EffectComposer>
   );
 }
 
@@ -304,11 +348,12 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
           <Canvas
             camera={{ position: [0, 0, 5], fov: 38 }}
             dpr={[1, 1.5]}
-            gl={{ antialias: true, alpha: true }}
+            gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
           >
             <Suspense fallback={null}>
               <GoldGlow />
               <ParticleBottle mousePower={mousePower} />
+              <HeroPostFX />
             </Suspense>
           </Canvas>
         </div>
