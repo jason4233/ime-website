@@ -1,6 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Environment, Trail } from "@react-three/drei";
 import { Suspense, useMemo, useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -10,27 +11,30 @@ import { motion, useScroll, useTransform } from "framer-motion";
 // ═══════════════════════════════════════════════════════════════
 //   LuxeSkinJourney — Cinematic 3D dive through 6 skin strata
 //
-//   Approach: instancedMesh "cell tissue" densely packed in a tube
-//   along the z-axis. Camera flies from z=+2 to z=-15. Each stratum
-//   is a ~2.4-unit-thick slab populated with ~400 cells whose colors
-//   reflect the layer's biology (warm keratin → rose dermis → purple
-//   signaling → gold exosomes).
-//
-//   Layers (back-to-front render order):
-//   1. <fog>             — exponential darkness fade
-//   2. Translucent layer membranes (6 thin discs) — sense of stratum
-//   3. CellTissue        — 2400 instanced spheres (the bulk)
-//   4. Particle dust     — 5000 fine Points, atmosphere
-//   5. ExosomesAscent    — last layer's golden particles rising
+//   Upgrade pass (4K physical feel):
+//   - meshPhysicalMaterial (transmission/clearcoat) on cells for
+//     subsurface translucency.
+//   - Per-cell nucleus (second instanced mesh, emissive purple).
+//   - Per-stratum biological tints (corneum ivory → hypodermis plum).
+//   - Volumetric atmosphere: fog + warehouse env + god-ray planes.
+//   - Exosomes: 120 total, top 40 with drei <Trail> ribbons.
+//   - Dual-layer dust (front bright / back dim) for parallax depth.
 // ═══════════════════════════════════════════════════════════════
 
+// Stratum: zh/en label + biological body tint + emissive accent + flatten ratio
 const STRATA = [
-  { zh: "角質層",         en: "Stratum corneum",           hex: "#F5C9A8", emissive: "#E8B07F" },
-  { zh: "表皮",           en: "Epidermis",                 hex: "#E8B07F", emissive: "#C28066" },
-  { zh: "真皮交界",        en: "Dermal-epidermal junction", hex: "#C28066", emissive: "#A85A4F" },
-  { zh: "真皮 · 微血管",   en: "Dermis · Capillaries",      hex: "#B85A7A", emissive: "#8B3A5C" },
-  { zh: "細胞訊息",        en: "Cellular communication",    hex: "#A374B8", emissive: "#7A4D8E" },
-  { zh: "外泌體抵達",      en: "Exosome arrival",           hex: "#E8B23F", emissive: "#CA8A04" },
+  // 角質層 — ivory beige, very flat squamous
+  { zh: "角質層",      en: "Stratum corneum",            tint: "#F0E2D6", emissive: "#E8B07F", flatten: 0.30 },
+  // 顆粒層 — pinkish
+  { zh: "顆粒層",      en: "Stratum granulosum",         tint: "#F2D4C8", emissive: "#D89C82", flatten: 0.55 },
+  // 棘層 — fleshy
+  { zh: "棘層",        en: "Stratum spinosum",           tint: "#E8B8AA", emissive: "#C28066", flatten: 0.85 },
+  // 基底層 — pink-rose
+  { zh: "基底層",      en: "Stratum basale",             tint: "#D898A2", emissive: "#A85A4F", flatten: 1.00 },
+  // 真皮 — deeper rose
+  { zh: "真皮層",      en: "Dermis",                     tint: "#C77A8A", emissive: "#8B3A5C", flatten: 1.15 },
+  // 皮下 — plum
+  { zh: "皮下組織",    en: "Hypodermis",                 tint: "#A8606A", emissive: "#7A4D8E", flatten: 1.30 },
 ] as const;
 
 // Tunnel geometry
@@ -42,185 +46,233 @@ const TUBE_RADIUS = 3.2;
 
 const CELLS_PER_STRATUM = 420;
 const TOTAL_CELLS = CELLS_PER_STRATUM * STRATA.length; // 2520
-const DUST_COUNT = 5000;
-const EXOSOME_COUNT = 80;
+const DUST_FRONT_COUNT = 1500;
+const DUST_BACK_COUNT = 3500;
+const EXOSOME_INSTANCED = 80;
+const EXOSOME_TRAILED = 40;
+// EXOSOME_TOTAL = 120 (instanced + trailed)
 
 // ───────────────────────────────────────────────────────────────
-//   CellTissue — the protagonist. 2520 instanced spheres pre-
-//   placed in the tunnel, colored by stratum, with per-frame
-//   breathing scale + faint z-drift to feel alive.
+//   CellTissue — body + nucleus, two instanced meshes per stratum
+//   Body: meshPhysicalMaterial (transmission ~ cytoplasm)
+//   Nucleus: 0.35x emissive purple sphere offset slightly
 // ───────────────────────────────────────────────────────────────
+type CellData = {
+  x: number;
+  y: number;
+  z: number;
+  baseScale: number;
+  flatten: number;
+  nucleusOffsetX: number;
+  nucleusOffsetZ: number;
+  phase: number;
+  driftAmp: number;
+  colorR: number;
+  colorG: number;
+  colorB: number;
+};
+
 function CellTissue() {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const bodyRef = useRef<THREE.InstancedMesh>(null);
+  const nucleusRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const tmpColor = useMemo(() => new THREE.Color(), []);
 
   // Pre-compute per-cell static data
-  const cells = useMemo(() => {
-    const arr: {
-      x: number;
-      y: number;
-      z: number;
-      baseScale: number;
-      phase: number;
-      driftAmp: number;
-      colorR: number;
-      colorG: number;
-      colorB: number;
-      stratumIdx: number;
-    }[] = [];
+  const cells = useMemo<CellData[]>(() => {
+    const arr: CellData[] = [];
 
     for (let s = 0; s < STRATA.length; s++) {
       const zCenter = TUNNEL_Z_START - (s + 0.5) * STRATUM_THICKNESS;
-      const baseColor = new THREE.Color(STRATA[s].hex);
-      const emissiveColor = new THREE.Color(STRATA[s].emissive);
+      const baseColor = new THREE.Color(STRATA[s].tint);
+      const flatten = STRATA[s].flatten;
 
       for (let i = 0; i < CELLS_PER_STRATUM; i++) {
-        // Distribute z within stratum thickness (with a soft falloff at edges so layers blend)
         const zJitter = (Math.random() - 0.5) * STRATUM_THICKNESS * 1.05;
         const z = zCenter + zJitter;
 
-        // Distribute in tube cross-section: uniform area (sqrt for radial)
-        // Bias toward outer half so center is open for camera path,
-        // but fill edges densely for "surrounded" feel
+        // Tube cross-section, dense outer ring (camera path stays clear-ish)
         const r = 0.45 + Math.sqrt(Math.random()) * (TUBE_RADIUS - 0.45);
         const theta = Math.random() * Math.PI * 2;
         const x = Math.cos(theta) * r;
         const y = Math.sin(theta) * r;
 
-        // Cell size: keratin (top) is flat & small, dermis bigger, purple signaling smallest+brightest
+        // Cell base size by stratum biology
         const sizeProfile =
-          s === 0 ? 0.04 + Math.random() * 0.05 : // tight keratin
-          s === 1 ? 0.06 + Math.random() * 0.06 : // epidermal
-          s === 2 ? 0.07 + Math.random() * 0.07 : // junction
-          s === 3 ? 0.08 + Math.random() * 0.10 : // dermis larger
-          s === 4 ? 0.05 + Math.random() * 0.06 : // signaling cells
-                    0.04 + Math.random() * 0.04;  // exosomes (small but bright)
+          s === 0 ? 0.06 + Math.random() * 0.05 :
+          s === 1 ? 0.07 + Math.random() * 0.06 :
+          s === 2 ? 0.08 + Math.random() * 0.07 :
+          s === 3 ? 0.09 + Math.random() * 0.08 :
+          s === 4 ? 0.10 + Math.random() * 0.09 :
+                    0.11 + Math.random() * 0.10;
 
-        // Color: blend between base color and emissive accent randomly
-        const blend = Math.random() * 0.55;
-        tmpColor.copy(baseColor).lerp(emissiveColor, blend);
-        // HDR boost for tonemapped emissive feel
-        const hdrBoost = 1.15 + Math.random() * 0.4;
+        // HSL jitter ±4% hue, ±8% lightness — natural variation
+        const hueShift = (Math.random() - 0.5) * 0.08;       // 0.04 each side
+        const lightShift = (Math.random() - 0.5) * 0.16;     // 0.08 each side
+        tmpColor.copy(baseColor).offsetHSL(hueShift, 0, lightShift);
+
+        const baseScale = sizeProfile;
+        const nucleusOffsetX = (Math.random() - 0.5) * baseScale * 0.3;
+        const nucleusOffsetZ = (Math.random() - 0.5) * baseScale * 0.3;
 
         arr.push({
           x,
           y,
           z,
-          baseScale: sizeProfile,
+          baseScale,
+          flatten,
+          nucleusOffsetX,
+          nucleusOffsetZ,
           phase: Math.random() * Math.PI * 2,
-          driftAmp: 0.02 + Math.random() * 0.04,
-          colorR: tmpColor.r * hdrBoost,
-          colorG: tmpColor.g * hdrBoost,
-          colorB: tmpColor.b * hdrBoost,
-          stratumIdx: s,
+          driftAmp: 0.015 + Math.random() * 0.035,
+          colorR: tmpColor.r,
+          colorG: tmpColor.g,
+          colorB: tmpColor.b,
         });
       }
     }
     return arr;
   }, [tmpColor]);
 
-  // Pre-fill instance colors (one-time)
+  // One-time per-instance color upload (body only — nucleus is uniform purple)
   useEffect(() => {
-    if (!meshRef.current) return;
+    if (!bodyRef.current) return;
     cells.forEach((c, i) => {
       tmpColor.setRGB(c.colorR, c.colorG, c.colorB);
-      meshRef.current!.setColorAt(i, tmpColor);
+      bodyRef.current!.setColorAt(i, tmpColor);
     });
-    if (meshRef.current.instanceColor) {
-      meshRef.current.instanceColor.needsUpdate = true;
+    if (bodyRef.current.instanceColor) {
+      bodyRef.current.instanceColor.needsUpdate = true;
     }
   }, [cells, tmpColor]);
 
-  // Per-frame: subtle breathing + slow z-drift (cells flow past camera direction)
+  // Per-frame: breathing scale + lateral drift; sync nucleus
   useFrame((state) => {
-    if (!meshRef.current) return;
+    if (!bodyRef.current || !nucleusRef.current) return;
     const t = state.clock.getElapsedTime();
 
     for (let i = 0; i < cells.length; i++) {
       const c = cells[i];
-
-      // Breathing pulse
-      const pulse = 1 + Math.sin(t * 0.7 + c.phase) * 0.18;
+      const pulse = 1 + Math.sin(t * 0.7 + c.phase) * 0.14;
       const scale = c.baseScale * pulse;
 
-      // Tiny lateral drift
       const dx = Math.sin(t * 0.4 + c.phase * 1.3) * c.driftAmp;
       const dy = Math.cos(t * 0.3 + c.phase * 0.9) * c.driftAmp;
 
+      // Body — flattened along z (squamous shape)
       dummy.position.set(c.x + dx, c.y + dy, c.z);
-      dummy.scale.setScalar(scale);
+      dummy.scale.set(scale, scale, scale * c.flatten);
       dummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, dummy.matrix);
+      bodyRef.current.setMatrixAt(i, dummy.matrix);
+
+      // Nucleus — 0.35x scale, slight offset
+      const nScale = scale * 0.35;
+      dummy.position.set(
+        c.x + dx + c.nucleusOffsetX,
+        c.y + dy,
+        c.z + c.nucleusOffsetZ
+      );
+      dummy.scale.set(nScale, nScale, nScale);
+      dummy.updateMatrix();
+      nucleusRef.current.setMatrixAt(i, dummy.matrix);
     }
-    meshRef.current.instanceMatrix.needsUpdate = true;
+    bodyRef.current.instanceMatrix.needsUpdate = true;
+    nucleusRef.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
-    <instancedMesh
-      ref={meshRef}
-      args={[undefined, undefined, TOTAL_CELLS]}
-      frustumCulled={false}
-    >
-      <sphereGeometry args={[1, 12, 10]} />
-      <meshStandardMaterial
-        vertexColors
-        roughness={0.45}
-        metalness={0.05}
-        emissive={"#FFFFFF" as any}
-        emissiveIntensity={0.32}
-        transparent
-        opacity={0.92}
-        toneMapped={false}
-      />
-    </instancedMesh>
+    <>
+      {/* Cell body — translucent cytoplasm */}
+      <instancedMesh
+        ref={bodyRef}
+        args={[undefined, undefined, TOTAL_CELLS]}
+        frustumCulled={false}
+      >
+        <sphereGeometry args={[1, 16, 12]} />
+        <meshPhysicalMaterial
+          vertexColors
+          transmission={0.55}
+          thickness={0.4}
+          roughness={0.45}
+          ior={1.36}
+          clearcoat={0.3}
+          clearcoatRoughness={0.7}
+          envMapIntensity={0.9}
+          attenuationColor={"#F2D4C8" as any}
+          attenuationDistance={0.3}
+          transparent
+          opacity={0.95}
+        />
+      </instancedMesh>
+
+      {/* Nucleus — emissive purple, gives interior structure */}
+      <instancedMesh
+        ref={nucleusRef}
+        args={[undefined, undefined, TOTAL_CELLS]}
+        frustumCulled={false}
+      >
+        <sphereGeometry args={[1, 12, 8]} />
+        <meshStandardMaterial
+          color={"#3F1F4F" as any}
+          emissive={"#7A4D8E" as any}
+          emissiveIntensity={0.3}
+          roughness={0.6}
+          metalness={0.0}
+        />
+      </instancedMesh>
+    </>
   );
 }
 
 // ───────────────────────────────────────────────────────────────
-//   ParticleDust — 5000 tiny additive points scattered through
-//   tunnel for atmosphere / motion blur substitute.
+//   ParticleDust (split front / back for parallax)
 // ───────────────────────────────────────────────────────────────
-function ParticleDust() {
+function ParticleDust({
+  count,
+  baseSize,
+  brightness,
+  speed,
+  opacity,
+}: {
+  count: number;
+  baseSize: number;
+  brightness: number;
+  speed: number;
+  opacity: number;
+}) {
   const ref = useRef<THREE.Points>(null);
 
-  const { positions, colors, sizes } = useMemo(() => {
-    const positions = new Float32Array(DUST_COUNT * 3);
-    const colors = new Float32Array(DUST_COUNT * 3);
-    const sizes = new Float32Array(DUST_COUNT);
+  const { positions, colors } = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
 
-    for (let i = 0; i < DUST_COUNT; i++) {
+    for (let i = 0; i < count; i++) {
       const z = TUNNEL_Z_START - Math.random() * TUNNEL_LENGTH;
       const stratumIdx = Math.min(
         STRATA.length - 1,
         Math.max(0, Math.floor((TUNNEL_Z_START - z) / STRATUM_THICKNESS))
       );
-      const baseColor = new THREE.Color(STRATA[stratumIdx].hex);
+      const baseColor = new THREE.Color(STRATA[stratumIdx].emissive);
 
-      // Slightly tighter spread for dust — keep camera surrounded
       const r = Math.sqrt(Math.random()) * (TUBE_RADIUS + 0.4);
       const theta = Math.random() * Math.PI * 2;
       positions[i * 3] = Math.cos(theta) * r;
       positions[i * 3 + 1] = Math.sin(theta) * r;
       positions[i * 3 + 2] = z;
 
-      // HDR color, lifted toward warm white so dust glows
-      colors[i * 3] = baseColor.r * 1.4 + 0.15;
-      colors[i * 3 + 1] = baseColor.g * 1.3 + 0.12;
-      colors[i * 3 + 2] = baseColor.b * 1.2 + 0.10;
-
-      sizes[i] = 0.5 + Math.random() * 1.5;
+      // HDR-warm dust
+      colors[i * 3] = baseColor.r * brightness + 0.12;
+      colors[i * 3 + 1] = baseColor.g * brightness + 0.10;
+      colors[i * 3 + 2] = baseColor.b * brightness + 0.08;
     }
-    return { positions, colors, sizes };
-  }, []);
+    return { positions, colors };
+  }, [count, brightness]);
 
-  // Slow constant drift along z (creates feel of flow as camera dives)
   useFrame((_state, delta) => {
     if (!ref.current) return;
     const arr = ref.current.geometry.attributes.position.array as Float32Array;
-    for (let i = 0; i < DUST_COUNT; i++) {
-      arr[i * 3 + 2] += delta * 0.18;
-      // Wrap back to far end
+    for (let i = 0; i < count; i++) {
+      arr[i * 3 + 2] += delta * speed;
       if (arr[i * 3 + 2] > TUNNEL_Z_START + 1) {
         arr[i * 3 + 2] = TUNNEL_Z_END - 0.5;
       }
@@ -233,29 +285,23 @@ function ParticleDust() {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={DUST_COUNT}
+          count={count}
           array={positions}
           itemSize={3}
         />
         <bufferAttribute
           attach="attributes-color"
-          count={DUST_COUNT}
+          count={count}
           array={colors}
           itemSize={3}
         />
-        <bufferAttribute
-          attach="attributes-size"
-          count={DUST_COUNT}
-          array={sizes}
-          itemSize={1}
-        />
       </bufferGeometry>
       <pointsMaterial
-        size={0.04}
+        size={baseSize * 0.04}
         sizeAttenuation
         vertexColors
         transparent
-        opacity={0.85}
+        opacity={opacity}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
         toneMapped={false}
@@ -265,8 +311,70 @@ function ParticleDust() {
 }
 
 // ───────────────────────────────────────────────────────────────
-//   StratumMembranes — 6 large translucent discs at each stratum
-//   center to give a "passing through layers" sensation
+//   GodRays — 3 transparent radial-gradient planes at strata
+//   boundaries, slowly sweeping. Fakes shafts of light through tissue.
+// ───────────────────────────────────────────────────────────────
+function GodRays() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  // Generate radial-gradient texture once
+  const rayTexture = useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const grad = ctx.createRadialGradient(
+      size / 2,
+      size / 2,
+      0,
+      size / 2,
+      size / 2,
+      size / 2
+    );
+    grad.addColorStop(0, "rgba(255,228,184,1)");
+    grad.addColorStop(0.4, "rgba(255,180,140,0.5)");
+    grad.addColorStop(1, "rgba(255,180,140,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, []);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const t = state.clock.getElapsedTime();
+    groupRef.current.children.forEach((child, i) => {
+      child.rotation.z = t * 0.05 * (i % 2 === 0 ? 1 : -1) + i * 0.4;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {[1.5, 3.5, 5.5].map((offset, i) => {
+        const z = TUNNEL_Z_START - offset * STRATUM_THICKNESS;
+        return (
+          <mesh key={i} position={[0, 0, z]} rotation={[0, 0, i * 0.7]}>
+            <planeGeometry args={[TUBE_RADIUS * 3, TUBE_RADIUS * 3]} />
+            <meshBasicMaterial
+              map={rayTexture}
+              transparent
+              opacity={0.06}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+              side={THREE.DoubleSide}
+              toneMapped={false}
+            />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────
+//   StratumMembranes — 6 thin translucent rings
 // ───────────────────────────────────────────────────────────────
 function StratumMembranes() {
   return (
@@ -283,7 +391,7 @@ function StratumMembranes() {
             <meshBasicMaterial
               color={s.emissive}
               transparent
-              opacity={0.06}
+              opacity={0.05}
               side={THREE.DoubleSide}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
@@ -297,87 +405,178 @@ function StratumMembranes() {
 }
 
 // ───────────────────────────────────────────────────────────────
-//   ExosomesAscent — last stratum: golden particles rising
+//   TrailedExosome — single drei <Trail>+mesh, animated rise + sway
+// ───────────────────────────────────────────────────────────────
+function TrailedExosome({
+  seed,
+}: {
+  seed: number;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const data = useMemo(() => {
+    const rng = (k: number) => {
+      const x = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453;
+      return x - Math.floor(x);
+    };
+    const r = Math.sqrt(rng(1)) * 2.4;
+    const theta = rng(2) * Math.PI * 2;
+    return {
+      x: Math.cos(theta) * r,
+      z: TUNNEL_Z_END + 1 + rng(3) * 4,
+      yStart: -3.5 - rng(4) * 2.5,
+      riseSpeed: 0.18 + rng(5) * 0.32,
+      sway: 0.06 + rng(6) * 0.10,
+      phase: rng(7) * Math.PI * 2,
+      scale: 0.07 + rng(8) * 0.07,
+    };
+  }, [seed]);
+
+  useFrame((state, delta) => {
+    if (!meshRef.current) return;
+    const t = state.clock.getElapsedTime();
+    const mesh = meshRef.current;
+
+    // Y advances; wrap when high
+    let y = mesh.position.y;
+    y += delta * data.riseSpeed;
+    if (y > 4) y = data.yStart;
+
+    const swayX = Math.sin(t * 0.6 + data.phase) * data.sway;
+    const swayZ = Math.cos(t * 0.4 + data.phase) * data.sway * 0.6;
+
+    mesh.position.set(data.x + swayX, y, data.z + swayZ);
+    const pulse = 1 + Math.sin(t * 1.2 + data.phase) * 0.18;
+    mesh.scale.setScalar(data.scale * pulse);
+  });
+
+  return (
+    <Trail
+      width={0.03}
+      length={8}
+      color={"#FCD27A" as any}
+      attenuation={(w) => w * w}
+    >
+      <mesh ref={meshRef} position={[data.x, data.yStart, data.z]}>
+        <sphereGeometry args={[1, 18, 14]} />
+        <meshPhysicalMaterial
+          transmission={0.7}
+          thickness={0.4}
+          ior={1.4}
+          roughness={0.05}
+          clearcoat={1}
+          clearcoatRoughness={0.04}
+          attenuationColor={"#FFA94D" as any}
+          attenuationDistance={0.4}
+          color={"#FFE6B0" as any}
+          emissive={"#FFC36A" as any}
+          emissiveIntensity={0.45}
+          envMapIntensity={1.8}
+          toneMapped={false}
+        />
+      </mesh>
+    </Trail>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────
+//   ExosomesAscent — 80 instanced (cheap) + 40 trailed (premium)
 // ───────────────────────────────────────────────────────────────
 function ExosomesAscent({ progress }: { progress: number }) {
   const visible = progress > 0.55;
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const instRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const goldA = useMemo(() => new THREE.Color("#E8B23F"), []);
-  const goldB = useMemo(() => new THREE.Color("#F4D78A"), []);
+  const goldA = useMemo(() => new THREE.Color("#FFE6B0"), []);
+  const goldB = useMemo(() => new THREE.Color("#FFA94D"), []);
   const tmpColor = useMemo(() => new THREE.Color(), []);
 
   const exosomes = useMemo(() => {
-    return Array.from({ length: EXOSOME_COUNT }, () => {
+    return Array.from({ length: EXOSOME_INSTANCED }, () => {
       const r = Math.sqrt(Math.random()) * 2.4;
       const theta = Math.random() * Math.PI * 2;
       return {
         x: Math.cos(theta) * r,
-        y: -3.5 - Math.random() * 2.5, // start below
-        z: TUNNEL_Z_END + 1 + Math.random() * 4, // last stratum range
+        y: -3.5 - Math.random() * 2.5,
+        z: TUNNEL_Z_END + 1 + Math.random() * 4,
         riseSpeed: 0.18 + Math.random() * 0.32,
-        sway: 0.04 + Math.random() * 0.08,
+        sway: 0.05 + Math.random() * 0.09,
         phase: Math.random() * Math.PI * 2,
-        scale: 0.05 + Math.random() * 0.08,
+        scale: 0.05 + Math.random() * 0.07,
         colorMix: Math.random(),
       };
     });
   }, []);
 
-  // Initial color
+  // Trail seeds — stable across renders
+  const trailSeeds = useMemo(
+    () => Array.from({ length: EXOSOME_TRAILED }, (_, i) => i + 7),
+    []
+  );
+
   useEffect(() => {
-    if (!meshRef.current) return;
+    if (!instRef.current) return;
     exosomes.forEach((e, i) => {
-      tmpColor.copy(goldA).lerp(goldB, e.colorMix).multiplyScalar(1.6);
-      meshRef.current!.setColorAt(i, tmpColor);
+      tmpColor.copy(goldA).lerp(goldB, e.colorMix * 0.6).multiplyScalar(1.6);
+      instRef.current!.setColorAt(i, tmpColor);
     });
-    if (meshRef.current.instanceColor) {
-      meshRef.current.instanceColor.needsUpdate = true;
+    if (instRef.current.instanceColor) {
+      instRef.current.instanceColor.needsUpdate = true;
     }
   }, [exosomes, goldA, goldB, tmpColor]);
 
   useFrame((state, delta) => {
-    if (!meshRef.current) return;
+    if (!instRef.current) return;
     const t = state.clock.getElapsedTime();
 
     for (let i = 0; i < exosomes.length; i++) {
       const e = exosomes[i];
       e.y += delta * e.riseSpeed;
-      // Wrap when too high
       if (e.y > 4) e.y = -4;
 
       const swayX = Math.sin(t * 0.6 + e.phase) * e.sway;
       const swayZ = Math.cos(t * 0.4 + e.phase) * e.sway * 0.5;
-
-      // Gentle pulse
       const pulse = 1 + Math.sin(t * 1.2 + e.phase) * 0.22;
 
       dummy.position.set(e.x + swayX, e.y, e.z + swayZ);
       dummy.scale.setScalar(e.scale * pulse);
       dummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, dummy.matrix);
+      instRef.current.setMatrixAt(i, dummy.matrix);
     }
-    meshRef.current.instanceMatrix.needsUpdate = true;
+    instRef.current.instanceMatrix.needsUpdate = true;
   });
 
   if (!visible) return null;
 
   return (
-    <instancedMesh
-      ref={meshRef}
-      args={[undefined, undefined, EXOSOME_COUNT]}
-      frustumCulled={false}
-    >
-      <sphereGeometry args={[1, 14, 14]} />
-      <meshStandardMaterial
-        vertexColors
-        emissive={"#FFFFFF" as any}
-        emissiveIntensity={0.85}
-        roughness={0.25}
-        metalness={0.15}
-        toneMapped={false}
-      />
-    </instancedMesh>
+    <>
+      {/* 80 instanced exosomes — cheap glassy spheres */}
+      <instancedMesh
+        ref={instRef}
+        args={[undefined, undefined, EXOSOME_INSTANCED]}
+        frustumCulled={false}
+      >
+        <sphereGeometry args={[1, 16, 14]} />
+        <meshPhysicalMaterial
+          vertexColors
+          transmission={0.7}
+          thickness={0.4}
+          ior={1.4}
+          roughness={0.06}
+          clearcoat={1}
+          clearcoatRoughness={0.05}
+          attenuationColor={"#FFA94D" as any}
+          attenuationDistance={0.4}
+          emissive={"#FFC36A" as any}
+          emissiveIntensity={0.4}
+          envMapIntensity={1.6}
+          toneMapped={false}
+        />
+      </instancedMesh>
+
+      {/* 40 premium trailed exosomes — drei <Trail> ribbons */}
+      {trailSeeds.map((s) => (
+        <TrailedExosome key={s} seed={s} />
+      ))}
+    </>
   );
 }
 
@@ -388,12 +587,14 @@ function CameraRig({ progress }: { progress: number }) {
   const { camera } = useThree();
   const lightRef = useRef<THREE.PointLight>(null);
 
-  useFrame(() => {
-    const targetZ =
-      TUNNEL_Z_START - progress * (TUNNEL_LENGTH - 1.5); // stop just inside last stratum
+  useFrame((state) => {
+    const targetZ = TUNNEL_Z_START - progress * (TUNNEL_LENGTH - 1.5);
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 0.09);
 
-    // Subtle organic sway (sinusoidal)
+    // Cinematic sway + tiny z-jitter for parallax-DOF feel
+    const t = state.clock.getElapsedTime();
+    const jitterZ = Math.sin(t * 0.7) * 0.02;
+
     camera.position.x = THREE.MathUtils.lerp(
       camera.position.x,
       Math.sin(progress * Math.PI * 1.6) * 0.55,
@@ -404,13 +605,14 @@ function CameraRig({ progress }: { progress: number }) {
       Math.cos(progress * Math.PI * 1.1) * 0.4,
       0.06
     );
+    camera.position.z += jitterZ * 0.1;
+
     camera.lookAt(
       Math.sin(progress * Math.PI * 1.6) * 0.4,
       Math.cos(progress * Math.PI * 1.1) * 0.3,
       camera.position.z - 2.2
     );
 
-    // Light follows camera so cells near the viewer always glow
     if (lightRef.current) {
       lightRef.current.position.set(
         camera.position.x,
@@ -423,42 +625,37 @@ function CameraRig({ progress }: { progress: number }) {
   return (
     <pointLight
       ref={lightRef}
-      intensity={3.4}
+      intensity={3.0}
       distance={6}
       decay={1.6}
-      color="#FFE4B8"
+      color={"#FFE4B8" as any}
     />
   );
 }
 
 // ───────────────────────────────────────────────────────────────
-//   StratumLight — colored point light per stratum, fades in/out
-//   based on camera proximity. Tints cells biologically.
+//   StratumLights — active + next colored point lights
 // ───────────────────────────────────────────────────────────────
 function StratumLights({ progress }: { progress: number }) {
-  // Pick the active stratum's emissive color and project a soft light
-  // at that z-position; intensity decays with distance from camera Z.
   const activeIdx = Math.min(
     STRATA.length - 1,
     Math.floor(progress * STRATA.length)
   );
   const nextIdx = Math.min(STRATA.length - 1, activeIdx + 1);
-  const activeColor = STRATA[activeIdx].emissive;
-  const nextColor = STRATA[nextIdx].emissive;
 
   return (
     <>
       <pointLight
         position={[0, 0, TUNNEL_Z_START - (activeIdx + 0.5) * STRATUM_THICKNESS]}
-        intensity={1.6}
-        color={activeColor}
+        intensity={1.4}
+        color={STRATA[activeIdx].emissive}
         distance={5}
         decay={1.8}
       />
       <pointLight
         position={[0, 0, TUNNEL_Z_START - (nextIdx + 0.5) * STRATUM_THICKNESS]}
-        intensity={0.9}
-        color={nextColor}
+        intensity={0.8}
+        color={STRATA[nextIdx].emissive}
         distance={5}
         decay={1.8}
       />
@@ -472,24 +669,54 @@ function StratumLights({ progress }: { progress: number }) {
 function SkinScene({ progress }: { progress: number }) {
   return (
     <>
-      <color attach="background" args={["#0A0A0D"]} />
-      <fog attach="fog" args={["#0A0A0D", 1.8, 9.0]} />
+      <color attach="background" args={["#0A0506"]} />
+      <fog attach="fog" args={["#0A0506", 3, 14]} />
 
-      <ambientLight intensity={0.25} />
+      <Environment
+        preset="warehouse"
+        background={false}
+        environmentIntensity={0.55}
+      />
+
+      <ambientLight intensity={0.2} />
+      <directionalLight
+        position={[2, 4, 3]}
+        intensity={0.85}
+        color={"#FFE9C8" as any}
+      />
+      <pointLight
+        position={[-3, -2, -1]}
+        intensity={0.4}
+        color={"#7A4D8E" as any}
+      />
 
       <CameraRig progress={progress} />
       <StratumLights progress={progress} />
 
       <StratumMembranes />
+      <GodRays />
       <CellTissue />
-      <ParticleDust />
+      <ParticleDust
+        count={DUST_BACK_COUNT}
+        baseSize={0.7}
+        brightness={0.9}
+        speed={0.14}
+        opacity={0.55}
+      />
+      <ParticleDust
+        count={DUST_FRONT_COUNT}
+        baseSize={1.4}
+        brightness={1.5}
+        speed={0.22}
+        opacity={0.85}
+      />
       <ExosomesAscent progress={progress} />
     </>
   );
 }
 
 // ───────────────────────────────────────────────────────────────
-//   Reduced-motion poster — static frame substitute
+//   Reduced-motion poster
 // ───────────────────────────────────────────────────────────────
 function StaticPoster() {
   return (
@@ -500,7 +727,7 @@ function StaticPoster() {
           "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(184,90,122,0.35), transparent 70%), " +
           "radial-gradient(ellipse 70% 50% at 50% 75%, rgba(122,77,142,0.30), transparent 70%), " +
           "radial-gradient(ellipse 40% 30% at 50% 95%, rgba(202,138,4,0.25), transparent 70%), " +
-          "#0A0A0D",
+          "#0A0506",
       }}
     />
   );
@@ -546,12 +773,14 @@ export function LuxeSkinJourney() {
             <StaticPoster />
           ) : (
             <Canvas
-              camera={{ position: [0, 0, TUNNEL_Z_START], fov: 64 }}
+              camera={{ position: [0, 0, TUNNEL_Z_START], fov: 28 }}
               dpr={[1, 1.5]}
               gl={{
                 antialias: true,
                 alpha: true,
                 toneMapping: THREE.ACESFilmicToneMapping,
+                toneMappingExposure: 1.1,
+                outputColorSpace: THREE.SRGBColorSpace,
                 powerPreference: "high-performance",
               }}
             >
@@ -562,13 +791,13 @@ export function LuxeSkinJourney() {
           )}
         </div>
 
-        {/* Soft cinematic vignette only at outer edges */}
+        {/* Soft cinematic vignette */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 95% 95% at center, transparent 65%, rgba(10,10,13,0.6) 100%)",
+              "radial-gradient(ellipse 95% 95% at center, transparent 65%, rgba(10,5,6,0.6) 100%)",
           }}
         />
 

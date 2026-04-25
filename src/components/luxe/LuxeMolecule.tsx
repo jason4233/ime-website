@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, Sparkles, Trail } from "@react-three/drei";
+import { Environment, MeshTransmissionMaterial, Sparkles, Trail } from "@react-three/drei";
 import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -9,17 +9,19 @@ import { motion, useScroll, useTransform } from "framer-motion";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ═══════════════════════════════════════════════════════════════
-//   LuxeMolecule — Rotating Exosome Vesicle (Cinematic v3)
-//   - Displacement-shader membrane (procedural noise ripple)
-//   - Layered halo glow (additive sphere outside membrane)
-//   - 350 instanced surface markers with color-varied pulse
-//   - Cargo orbits with shimmer trails (drei <Trail>)
-//   - HDR warehouse environment for PBR reflections
-//   - Sparkles ambient particles + radial backdrop disc
+//   LuxeMolecule — Rotating Exosome Vesicle (Cinematic v4 — 4K Physical)
+//   - Two-layer membrane: MeshTransmissionMaterial + emissive inner core
+//   - Procedurally generated normal map for surface micro-detail
+//   - 600 metallic gold instanced surface markers (CD9/CD63 tetraspanins)
+//   - 28 emissive cargo with HDR-bright glow + 8 inner translucent vesicles
+//   - HDR warehouse environment + directional key + purple back-rim
+//   - Shader-driven fresnel halo (gold→purple gradient on rim)
+//   - Linear depth fog for cinematic depth illusion
 // ═══════════════════════════════════════════════════════════════
 
-const MARKER_COUNT = 350;
-const CARGO_COUNT = 18; // fewer cargo so each can have a Trail
+const MARKER_COUNT = 600;
+const CARGO_COUNT = 28;
+const INNER_VESICLE_COUNT = 8;
 
 // ───────────────────────────────────────────────────────────────
 // Shared shader uniforms — animated by membrane, read by halo too
@@ -29,18 +31,71 @@ const sharedUniforms = {
 };
 
 // ───────────────────────────────────────────────────────────────
-// Membrane — physical glass with procedural displacement ripple
+// Procedural normal map — sobel-derived from random heightfield
+// Adds micro-bumpiness to the membrane surface for grazing-angle highlights
+// ───────────────────────────────────────────────────────────────
+function useNormalMap(size = 256, strength = 1.5) {
+  return useMemo(() => {
+    const heightData = new Float32Array(size * size);
+    for (let i = 0; i < size * size; i++) heightData[i] = Math.random();
+    const normalData = new Uint8Array(size * size * 4);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = y * size + x;
+        const left = heightData[y * size + Math.max(0, x - 1)];
+        const right = heightData[y * size + Math.min(size - 1, x + 1)];
+        const up = heightData[Math.max(0, y - 1) * size + x];
+        const down = heightData[Math.min(size - 1, y + 1) * size + x];
+        const dx = (right - left) * strength;
+        const dy = (down - up) * strength;
+        normalData[i * 4 + 0] = Math.max(0, Math.min(255, (dx * 0.5 + 0.5) * 255));
+        normalData[i * 4 + 1] = Math.max(0, Math.min(255, (dy * 0.5 + 0.5) * 255));
+        normalData[i * 4 + 2] = 255;
+        normalData[i * 4 + 3] = 255;
+      }
+    }
+    const tex = new THREE.DataTexture(normalData, size, size, THREE.RGBAFormat);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(3, 3);
+    tex.needsUpdate = true;
+    return tex;
+  }, [size, strength]);
+}
+
+// Roughness micro-variation map — same noise tech, single channel intent
+function useRoughnessMap(size = 256) {
+  return useMemo(() => {
+    const data = new Uint8Array(size * size * 4);
+    for (let i = 0; i < size * size; i++) {
+      const v = Math.floor(Math.random() * 60 + 195);
+      data[i * 4 + 0] = v;
+      data[i * 4 + 1] = v;
+      data[i * 4 + 2] = v;
+      data[i * 4 + 3] = 255;
+    }
+    const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 4);
+    tex.needsUpdate = true;
+    return tex;
+  }, [size]);
+}
+
+// ───────────────────────────────────────────────────────────────
+// Membrane outer shell — translucent phospholipid bilayer
+// Uses MeshTransmissionMaterial for true subsurface scattering feel.
+// onBeforeCompile injects 3D simplex noise displacement so the
+// silhouette has visibly bumpy rim (revealed by transmission + rim light).
 // ───────────────────────────────────────────────────────────────
 function ExosomeMembrane() {
   const ref = useRef<THREE.Mesh>(null);
-  const matRef = useRef<THREE.MeshPhysicalMaterial>(null);
-  const shaderRef = useRef<{ uniforms: { uTime: { value: number } } } | null>(null);
+  const matRef = useRef<any>(null);
 
-  // Inject custom displacement noise into MeshPhysicalMaterial via onBeforeCompile.
-  // Classic 3D simplex-style noise → displaces along vertex normal.
+  const normalMap = useNormalMap(256, 1.6);
+  const roughnessMap = useRoughnessMap(256);
+
   const handleBeforeCompile = (shader: any) => {
     shader.uniforms.uTime = sharedUniforms.uTime;
-    shaderRef.current = shader;
 
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -49,7 +104,7 @@ function ExosomeMembrane() {
         #include <common>
         uniform float uTime;
 
-        // Hash-based 3D noise (fast, no permutation table)
+        // Hash-based 3D simplex noise (fast, no permutation table)
         vec3 mod289(vec3 x){return x - floor(x * (1.0/289.0)) * 289.0;}
         vec4 mod289(vec4 x){return x - floor(x * (1.0/289.0)) * 289.0;}
         vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
@@ -102,10 +157,11 @@ function ExosomeMembrane() {
       .replace(
         "#include <begin_vertex>",
         `
-        // Two-octave noise — slow base ripple + faster detail
+        // Two-octave noise — slow base ripple + faster surface chatter.
+        // Increased base scale so silhouette bumpiness reads at grazing angles.
         float n1 = snoise(position * 1.6 + vec3(uTime * 0.18));
         float n2 = snoise(position * 3.4 - vec3(uTime * 0.32));
-        float displacement = n1 * 0.05 + n2 * 0.018;
+        float displacement = n1 * 0.055 + n2 * 0.022;
         vec3 transformed = position + normal * displacement;
         `
       );
@@ -123,25 +179,29 @@ function ExosomeMembrane() {
 
   return (
     <mesh ref={ref}>
-      {/* Higher subdivision so noise displacement reads smoothly */}
+      {/* High subdivision so the noise displacement reads smoothly at silhouette */}
       <icosahedronGeometry args={[1.05, 7]} />
-      <meshPhysicalMaterial
-        ref={matRef}
-        color="#3a2840"
-        roughness={0.3}
-        metalness={0.05}
-        transmission={0.65}
-        thickness={0.85}
-        ior={1.42}
-        clearcoat={0.55}
-        clearcoatRoughness={0.25}
-        attenuationColor="#7A4D8E"
-        attenuationDistance={2}
-        emissive="#7A4D8E"
-        emissiveIntensity={0.22}
-        envMapIntensity={1.1}
-        transparent
-        opacity={0.88}
+      {/*
+        MeshTransmissionMaterial gives real subsurface scattering — light bends
+        through the lipid bilayer instead of bouncing off it like solid plastic.
+      */}
+      <MeshTransmissionMaterial
+        ref={matRef as any}
+        transmission={0.85}
+        thickness={0.6}
+        roughness={0.22}
+        ior={1.38}
+        chromaticAberration={0.04}
+        attenuationColor="#5C2D72"
+        attenuationDistance={0.5}
+        color="#A374B8"
+        anisotropy={0.4}
+        backside
+        backsideThickness={0.18}
+        normalMap={normalMap}
+        normalScale={new THREE.Vector2(0.4, 0.4)}
+        roughnessMap={roughnessMap}
+        envMapIntensity={1.2}
         onBeforeCompile={handleBeforeCompile}
       />
     </mesh>
@@ -149,7 +209,39 @@ function ExosomeMembrane() {
 }
 
 // ───────────────────────────────────────────────────────────────
-// Halo — additive transparent sphere outside membrane (volumetric feel)
+// Inner core — emissive sphere visible through the translucent membrane
+// Provides the warm internal glow that sells the "carrying cargo" idea.
+// ───────────────────────────────────────────────────────────────
+function InnerCore() {
+  const ref = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.getElapsedTime();
+    // Counter-rotate slightly so the core feels like a separate body suspended inside
+    ref.current.rotation.y = -t * 0.08;
+    ref.current.rotation.z = Math.sin(t * 0.4) * 0.08;
+    const s = 0.7 + Math.sin(t * 0.8) * 0.015;
+    ref.current.scale.setScalar(s);
+  });
+
+  return (
+    <mesh ref={ref}>
+      <sphereGeometry args={[1, 48, 48]} />
+      <meshStandardMaterial
+        color="#7A4D8E"
+        emissive="#C9A0E0"
+        emissiveIntensity={0.85}
+        roughness={0.55}
+        metalness={0.1}
+      />
+    </mesh>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────
+// Halo — additive fresnel-rim sphere outside membrane
+// Tighter pow exponent → sharp gold-purple rim, not muddy halo
 // ───────────────────────────────────────────────────────────────
 function MembraneHalo() {
   const ref = useRef<THREE.Mesh>(null);
@@ -157,20 +249,18 @@ function MembraneHalo() {
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.getElapsedTime();
-    // Breathe: subtle scale + opacity oscillation
     const s = 1 + Math.sin(t * 0.7) * 0.02;
     ref.current.scale.setScalar(s);
     const mat = ref.current.material as THREE.ShaderMaterial;
     if (mat?.uniforms?.uTime) mat.uniforms.uTime.value = t;
   });
 
-  // Custom fresnel-rim shader so halo is hot at silhouette, faint at center
   const haloMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uColorA: { value: new THREE.Color("#A374B8") },
-        uColorB: { value: new THREE.Color("#E8B23F") },
+        uColorA: { value: new THREE.Color("#7A4D8E") }, // purple at center
+        uColorB: { value: new THREE.Color("#E8C266") }, // gold at extreme rim
       },
       vertexShader: /* glsl */ `
         varying vec3 vNormal;
@@ -190,10 +280,12 @@ function MembraneHalo() {
         varying vec3 vViewDir;
         void main() {
           float fres = 1.0 - max(dot(vNormal, vViewDir), 0.0);
-          fres = pow(fres, 2.4);
+          // Sharper rim — pow 5.5 keeps halo concentrated to silhouette
+          fres = pow(fres, 5.5);
           float pulse = 0.85 + 0.15 * sin(uTime * 1.1);
+          // Gold-purple ramp: purple inside, gold at extreme rim
           vec3 col = mix(uColorA, uColorB, fres);
-          float alpha = fres * 0.55 * pulse;
+          float alpha = fres * 0.85 * pulse;
           gl_FragColor = vec4(col * pulse, alpha);
         }
       `,
@@ -212,18 +304,14 @@ function MembraneHalo() {
 }
 
 // ───────────────────────────────────────────────────────────────
-// Surface markers — 350 instanced spheres with pulse + color variation
-// Color is animated per-instance via instanceColor attribute
+// Surface markers — 600 metallic gold instanced spheres
+// Real PBR with clearcoat → reflects HDR environment, looks like jewelry
+// Per-instance: HSL color jitter, scale jitter, emissive pulse with phase
 // ───────────────────────────────────────────────────────────────
 function SurfaceMarkers() {
   const ref = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const colorTmp = useMemo(() => new THREE.Color(), []);
-
-  // Three "stops" we'll lerp between for color variation
-  const colA = useMemo(() => new THREE.Color("#E8B23F"), []); // gold
-  const colB = useMemo(() => new THREE.Color("#CA8A04"), []); // amber
-  const colC = useMemo(() => new THREE.Color("#A374B8"), []); // soft magenta
 
   const positions = useMemo(() => {
     const arr: {
@@ -232,9 +320,11 @@ function SurfaceMarkers() {
       z: number;
       phase: number;
       sizeBase: number;
-      colorPhase: number;
+      hueShift: number; // small HSL hue jitter ±5° around gold
+      lightShift: number;
     }[] = [];
-    const r = 1.085;
+    // Slight offset above surface so markers cast tiny ambient occlusion
+    const r = 1.05 * 1.005;
     const phi = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < MARKER_COUNT; i++) {
       const y = 1 - (i / (MARKER_COUNT - 1)) * 2;
@@ -245,13 +335,31 @@ function SurfaceMarkers() {
         y: y * r,
         z: Math.sin(theta) * radius * r,
         phase: Math.random() * Math.PI * 2,
-        // Varied marker sizes (most small, a few large "feature" tetraspanins)
-        sizeBase: 0.018 + Math.pow(Math.random(), 3) * 0.024,
-        colorPhase: Math.random() * Math.PI * 2,
+        // Random scale 0.011–0.022 per instance (varied protein density)
+        sizeBase: 0.011 + Math.random() * 0.011,
+        hueShift: (Math.random() - 0.5) * (10 / 360), // ±5° hue
+        lightShift: (Math.random() - 0.5) * 0.08,
       });
     }
     return arr;
   }, []);
+
+  // Pre-compute base instance colors (gold #E8C266 with HSL jitter)
+  const baseColors = useMemo(() => {
+    const c = new THREE.Color();
+    const hsl = { h: 0, s: 0, l: 0 };
+    return positions.map((p) => {
+      c.set("#E8C266");
+      c.getHSL(hsl);
+      const out = new THREE.Color();
+      out.setHSL(
+        (hsl.h + p.hueShift + 1) % 1,
+        Math.min(1, hsl.s),
+        Math.max(0, Math.min(1, hsl.l + p.lightShift))
+      );
+      return out;
+    });
+  }, [positions]);
 
   useFrame((state) => {
     if (!ref.current) return;
@@ -269,19 +377,15 @@ function SurfaceMarkers() {
       [y, z] = [y * cx - z * sx, y * sx + z * cx];
 
       dummy.position.set(x, y, z);
-      // Dramatic pulse: wider amplitude than before
-      const pulse = 0.55 + Math.sin(t * 1.6 + p.phase) * 0.55;
+      // Emissive pulse approximated via scale shimmer (per-instance phase)
+      const pulse = 0.92 + Math.sin(t * 2.1 + p.phase) * 0.18;
       dummy.scale.setScalar(p.sizeBase * pulse);
       dummy.updateMatrix();
       ref.current.setMatrixAt(i, dummy.matrix);
 
-      // Color variation — blend gold ↔ amber ↔ magenta with phase offset
-      const k = 0.5 + 0.5 * Math.sin(t * 0.9 + p.colorPhase);
-      // Three-way mix using two lerps
-      const k2 = 0.5 + 0.5 * Math.sin(t * 0.55 + p.colorPhase * 1.7);
-      colorTmp.copy(colA).lerp(colB, k);
-      // Light magenta tint on a fraction of cycle
-      colorTmp.lerp(colC, k2 * 0.18);
+      // Color brightness oscillation simulates emissive flicker 0.0 → 0.4
+      const flick = 0.85 + Math.sin(t * 1.7 + p.phase * 1.3) * 0.4;
+      colorTmp.copy(baseColors[i]).multiplyScalar(flick);
       ref.current.setColorAt(i, colorTmp);
     }
     ref.current.instanceMatrix.needsUpdate = true;
@@ -290,14 +394,22 @@ function SurfaceMarkers() {
 
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, MARKER_COUNT]}>
-      <sphereGeometry args={[1, 14, 14]} />
-      <meshBasicMaterial toneMapped={false} />
+      <sphereGeometry args={[1, 12, 12]} />
+      <meshPhysicalMaterial
+        color="#E8C266"
+        metalness={0.85}
+        roughness={0.18}
+        clearcoat={0.6}
+        clearcoatRoughness={0.2}
+        envMapIntensity={1.4}
+      />
     </instancedMesh>
   );
 }
 
 // ───────────────────────────────────────────────────────────────
 // One cargo particle — wrapped in <Trail> so it leaves a fading ribbon
+// Uses HDR linear-space color (>1.0) so ACES tonemapping produces real bloom
 // ───────────────────────────────────────────────────────────────
 function CargoParticle({
   radius,
@@ -315,8 +427,14 @@ function CargoParticle({
   hue: number;
 }) {
   const ref = useRef<THREE.Mesh>(null);
-  // Alternating cargo color: most pale-mint, some warm-gold (microRNA vs growth-factor visual cue)
-  const color = hue < 0.5 ? "#C7E3D8" : "#E8B23F";
+  // HDR-bright cargo: gold microRNA vs pale-mint growth-factor
+  // Color values >1.0 in linear space create bloom feeling under ACES
+  const isGold = hue < 0.55;
+  const hdrColor = useMemo(
+    () => (isGold ? new THREE.Color(2.4, 1.8, 0.6) : new THREE.Color(1.4, 2.2, 1.8)),
+    [isGold]
+  );
+  const trailColor = isGold ? "#FCD27A" : "#C7E3D8";
 
   useFrame((state) => {
     if (!ref.current) return;
@@ -334,15 +452,15 @@ function CargoParticle({
 
   return (
     <Trail
-      width={0.08}
-      length={3.2}
-      color={color}
+      width={0.06}
+      length={14}
+      color={trailColor}
       attenuation={(t) => t * t}
-      decay={1.6}
+      decay={1.4}
     >
       <mesh ref={ref}>
         <sphereGeometry args={[0.022, 10, 10]} />
-        <meshBasicMaterial color={color} toneMapped={false} />
+        <meshBasicMaterial color={hdrColor} toneMapped={false} />
       </mesh>
     </Trail>
   );
@@ -352,7 +470,8 @@ function CargoOrbits() {
   const orbits = useMemo(
     () =>
       Array.from({ length: CARGO_COUNT }, () => ({
-        radius: 0.32 + Math.random() * 0.55,
+        // Constrain to inner radius 0.55 so cargo lives clearly inside the membrane
+        radius: 0.18 + Math.random() * 0.37,
         speed: 0.45 + Math.random() * 0.85,
         phase: Math.random() * Math.PI * 2,
         tiltX: (Math.random() - 0.5) * Math.PI,
@@ -372,14 +491,91 @@ function CargoOrbits() {
 }
 
 // ───────────────────────────────────────────────────────────────
-// Backdrop — radial gold disc behind the molecule (custom shader)
+// Inner translucent vesicles — 8 larger spheres with subtle transmission
+// They scatter the inner-core light, giving multi-layered depth
+// ───────────────────────────────────────────────────────────────
+function InnerVesicle({
+  radius,
+  speed,
+  phase,
+  tiltX,
+  tiltZ,
+  size,
+}: {
+  radius: number;
+  speed: number;
+  phase: number;
+  tiltX: number;
+  tiltZ: number;
+  size: number;
+}) {
+  const ref = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (!ref.current) return;
+    const t = state.clock.getElapsedTime();
+    const angle = t * speed + phase;
+    let x = Math.cos(angle) * radius;
+    let y = 0;
+    let z = Math.sin(angle) * radius;
+    const c1 = Math.cos(tiltX), s1 = Math.sin(tiltX);
+    [y, z] = [y * c1 - z * s1, y * s1 + z * c1];
+    const c2 = Math.cos(tiltZ), s2 = Math.sin(tiltZ);
+    [x, y] = [x * c2 - y * s2, x * s2 + y * c2];
+    ref.current.position.set(x, y, z);
+    ref.current.rotation.y = t * 0.4;
+  });
+
+  return (
+    <mesh ref={ref}>
+      <sphereGeometry args={[size, 24, 24]} />
+      <meshPhysicalMaterial
+        color="#D4B6E6"
+        transmission={0.6}
+        thickness={0.3}
+        roughness={0.3}
+        ior={1.3}
+        transparent
+        opacity={0.85}
+        envMapIntensity={0.8}
+      />
+    </mesh>
+  );
+}
+
+function InnerVesicles() {
+  const vesicles = useMemo(
+    () =>
+      Array.from({ length: INNER_VESICLE_COUNT }, () => ({
+        radius: 0.15 + Math.random() * 0.3,
+        speed: 0.18 + Math.random() * 0.32,
+        phase: Math.random() * Math.PI * 2,
+        tiltX: (Math.random() - 0.5) * Math.PI,
+        tiltZ: (Math.random() - 0.5) * Math.PI,
+        size: 0.04 + Math.random() * 0.05,
+      })),
+    []
+  );
+  return (
+    <>
+      {vesicles.map((v, i) => (
+        <InnerVesicle key={i} {...v} />
+      ))}
+    </>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────
+// Backdrop — purple-tinted radial gradient with vignette falloff
+// Pulled from #0A0A0D outer to #1A0F26 inner (subtle purple tint)
 // ───────────────────────────────────────────────────────────────
 function BackdropDisc() {
   const material = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: new THREE.Color("#CA8A04") },
+        uColorInner: { value: new THREE.Color("#1A0F26") },
+        uColorOuter: { value: new THREE.Color("#0A0A0D") },
       },
       vertexShader: /* glsl */ `
         varying vec2 vUv;
@@ -390,21 +586,21 @@ function BackdropDisc() {
       `,
       fragmentShader: /* glsl */ `
         uniform float uTime;
-        uniform vec3 uColor;
+        uniform vec3 uColorInner;
+        uniform vec3 uColorOuter;
         varying vec2 vUv;
         void main() {
           float d = distance(vUv, vec2(0.5));
-          // Soft radial falloff with subtle breathing
-          float breathe = 0.92 + 0.08 * sin(uTime * 0.6);
-          float core = smoothstep(0.5, 0.0, d) * breathe;
-          // Faint outer glow ring
+          float breathe = 0.94 + 0.06 * sin(uTime * 0.6);
+          // Smooth radial falloff with vignette
+          float core = smoothstep(0.55, 0.0, d) * breathe;
+          vec3 col = mix(uColorOuter, uColorInner, core);
+          // Subtle gold rim glow
           float ring = smoothstep(0.5, 0.32, d) - smoothstep(0.32, 0.0, d) * 0.4;
-          float alpha = core * 0.55 + ring * 0.08;
-          gl_FragColor = vec4(uColor * (0.6 + core * 0.6), alpha);
+          col += vec3(0.79, 0.54, 0.02) * ring * 0.04;
+          gl_FragColor = vec4(col, 1.0);
         }
       `,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
       depthWrite: false,
       side: THREE.DoubleSide,
     });
@@ -416,7 +612,7 @@ function BackdropDisc() {
 
   return (
     <mesh position={[0, 0, -3]} material={material}>
-      <planeGeometry args={[8, 8]} />
+      <planeGeometry args={[10, 10]} />
     </mesh>
   );
 }
@@ -425,32 +621,35 @@ function MoleculeScene() {
   return (
     <>
       <color attach="background" args={["#0A0A0D"]} />
+      {/* Linear depth fog — front cargo bright, back details dimmed for free depth */}
+      <fog attach="fog" args={["#0A0A0D", 4, 9]} />
 
-      {/* HDR environment for PBR reflections on the membrane */}
-      <Environment preset="warehouse" environmentIntensity={0.45} />
+      {/* HDR environment — gives metallic markers real reflections */}
+      <Environment preset="warehouse" background={false} environmentIntensity={1.2} />
 
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[3, 4, 5]} intensity={1.4} color="#F5F0E8" />
-      <pointLight position={[-3, -2, 2]} intensity={1.4} color="#7A4D8E" distance={10} />
-      <pointLight position={[2, -1, 4]} intensity={1.1} color="#CA8A04" distance={10} />
+      {/* Three-point lighting: key + back rim purple + low ambient */}
+      <ambientLight intensity={0.15} />
+      <directionalLight position={[3, 4, 2]} intensity={1.5} color="#F5F0E8" />
+      <pointLight position={[-2, 0, 1.5]} intensity={0.6} color="#7A4D8E" distance={10} />
 
-      {/* Backdrop glow disc (z = -3) */}
       <BackdropDisc />
 
-      {/* The molecule */}
+      {/* Layered molecule: backdrop → inner core → vesicles → membrane → markers → halo */}
+      <InnerCore />
+      <InnerVesicles />
       <ExosomeMembrane />
-      <MembraneHalo />
       <SurfaceMarkers />
+      <MembraneHalo />
       <CargoOrbits />
 
       {/* Atmospheric particles drifting around the vesicle */}
       <Sparkles
-        count={150}
+        count={120}
         scale={[5, 5, 5]}
-        size={3}
-        speed={0.2}
-        opacity={0.7}
-        color="#E8B23F"
+        size={2.4}
+        speed={0.18}
+        opacity={0.55}
+        color="#E8C266"
       />
     </>
   );
@@ -489,9 +688,15 @@ export function LuxeMolecule() {
         >
           <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(202,138,4,0.18),transparent_60%)] blur-2xl" />
           <Canvas
-            camera={{ position: [0, 0, 3.4], fov: 38 }}
+            camera={{ position: [0, 0, 4], fov: 32 }}
             dpr={[1, 1.5]}
-            gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
+            gl={{
+              antialias: true,
+              alpha: true,
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.15,
+              outputColorSpace: THREE.SRGBColorSpace,
+            }}
           >
             <Suspense fallback={null}>
               <MoleculeScene />
