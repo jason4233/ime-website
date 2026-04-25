@@ -1,6 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Sparkles } from "@react-three/drei";
 import { Suspense, useMemo, useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -208,6 +209,8 @@ function CameraRig({ progress }: { progress: number }) {
 }
 
 function SkinScene({ progress }: { progress: number }) {
+  // Use a Drei Sparkles cluster that follows camera (we know this works
+  // because Hero uses it). Three layers to give density + color depth.
   return (
     <>
       <color attach="background" args={["#0A0A0D"]} />
@@ -215,7 +218,38 @@ function SkinScene({ progress }: { progress: number }) {
       <ambientLight intensity={0.5} />
 
       <CameraRig progress={progress} />
-      <CellTunnel />
+
+      {/* Foreground: dense bright cells in immediate vicinity of camera */}
+      <Sparkles
+        count={2200}
+        scale={[8, 8, 30]}
+        position={[0, 0, -6]}
+        size={6}
+        speed={0.15}
+        opacity={1}
+        color={progress < 0.5 ? "#F5C9A8" : progress < 0.8 ? "#B85A7A" : "#E8B23F"}
+      />
+      {/* Mid-range tissue scatter */}
+      <Sparkles
+        count={1800}
+        scale={[14, 14, 30]}
+        position={[0, 0, -6]}
+        size={3}
+        speed={0.08}
+        opacity={0.7}
+        color={progress < 0.5 ? "#E8B07F" : progress < 0.8 ? "#A374B8" : "#CA8A04"}
+      />
+      {/* Distant ambient glow */}
+      <Sparkles
+        count={1000}
+        scale={[20, 20, 30]}
+        position={[0, 0, -6]}
+        size={1.5}
+        speed={0.04}
+        opacity={0.5}
+        color="#7A4D8E"
+      />
+
       <ExosomesAscent progress={progress} />
     </>
   );
