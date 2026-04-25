@@ -172,11 +172,13 @@ function Ampoule({ mousePower }: { mousePower: { current: number } }) {
     // Slight push-away when mouse disperses particles, so the glass
     // recedes a hair and the user reads "the field reacted to me".
     const recede = 1.0 - mousePower.current * 0.05;
-    groupRef.current.scale.setScalar(pulse * recede);
+    // Multiply by base scale (0.6) so initial scale prop is preserved.
+    const BASE_SCALE = 0.6;
+    groupRef.current.scale.setScalar(BASE_SCALE * pulse * recede);
   });
 
   return (
-    <group ref={groupRef} position={[0, -0.05, 0]}>
+    <group ref={groupRef} position={[0, -0.35, 0]} scale={0.6}>
       {/* Glass shell — the hero of the scene */}
       <mesh castShadow>
         <latheGeometry args={[points, 64]} />
@@ -496,7 +498,7 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
           }}
         >
           <Canvas
-            camera={{ position: [0, 0, 5], fov: 38 }}
+            camera={{ position: [0, 0, 6.5], fov: 32 }}
             dpr={[1, 1.5]}
             gl={{
               antialias: true,
@@ -563,13 +565,22 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
         </div>
       )}
 
-      {/* Layer 1.5: vertical gradient veil to lift text legibility */}
+      {/* Layer 1.5: vertical gradient veil to lift text legibility.
+          Stronger center band (text region) + radial dark behind text. */}
       <div
         aria-hidden
         className="absolute inset-0 z-[5] pointer-events-none"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(10,10,13,0) 0%, rgba(10,10,13,0.45) 35%, rgba(10,10,13,0.45) 65%, rgba(10,10,13,0) 100%)",
+            "linear-gradient(to bottom, rgba(10,10,13,0.15) 0%, rgba(10,10,13,0.55) 30%, rgba(10,10,13,0.6) 55%, rgba(10,10,13,0.35) 80%, rgba(10,10,13,0.05) 100%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 z-[6] pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 55% 45% at 50% 42%, rgba(10,10,13,0.55) 0%, rgba(10,10,13,0.25) 50%, transparent 80%)",
         }}
       />
 
@@ -611,7 +622,11 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.4, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="font-serif-tc text-luxe-ivory leading-[1.15] tracking-[-0.01em] max-w-3xl mb-6 font-medium"
-          style={{ fontSize: "clamp(2.25rem, 5vw, 4.25rem)" }}
+          style={{
+            fontSize: "clamp(2.25rem, 5vw, 4.25rem)",
+            textShadow:
+              "0 2px 20px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.4)",
+          }}
         >
           <span className="block">{headline}</span>
           <span className="block mt-1 text-luxe-ivoryDim font-light">
