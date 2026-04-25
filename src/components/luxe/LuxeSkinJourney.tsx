@@ -37,6 +37,8 @@ function colorAtZ(z: number): THREE.Color {
   return out;
 }
 
+// Kept for future iteration; currently unused in favor of Sparkles approach below
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function CellTunnel() {
   const ref = useRef<THREE.Points>(null);
   const { camera } = useThree();
