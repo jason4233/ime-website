@@ -8,187 +8,207 @@ import { motion, useScroll, useTransform } from "framer-motion";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ═══════════════════════════════════════════════════════════════
-//   LuxeSkinJourney — Scroll-linked camera dive
-//   Camera Z translates from far → close while passing skin "strata"
-//   Each stratum is a translucent plane with cell-like noise texture
+//   LuxeSkinJourney — scroll-linked dive through skin layers
+//   - Each stratum is densely packed instanced spheres (real "cells")
+//   - 6 strata, each visually distinct (size, density, color)
+//   - Camera dives through Z; opacity fades by distance
+//   - Deepest stratum: exosomes emerge and ascend
 // ═══════════════════════════════════════════════════════════════
 
-const STRATA = [
-  { z: 0,   color: "#E8D5C2", label: "Stratum corneum",  zh: "角質層" },
-  { z: -2,  color: "#D8B896", label: "Epidermis",         zh: "表皮" },
-  { z: -4,  color: "#A87A61", label: "Dermal-epidermal junction", zh: "真皮交界" },
-  { z: -6,  color: "#7A4D5E", label: "Dermis · Capillaries", zh: "真皮 · 微血管" },
-  { z: -8,  color: "#3a2840", label: "Cellular communication", zh: "細胞訊息" },
-  { z: -10, color: "#7A4D8E", label: "Exosome arrival",   zh: "外泌體抵達" },
+type Stratum = {
+  z: number;
+  zh: string;
+  en: string;
+  color: string;
+  emissive: string;
+  cellCount: number;
+  cellSize: [number, number]; // min/max
+  packDensity: number; // tighter cluster
+};
+
+const STRATA: Stratum[] = [
+  { z:  0.0, zh: "角質層",       en: "Stratum corneum",           color: "#E8D5C2", emissive: "#3a2820", cellCount: 380, cellSize: [0.04, 0.07], packDensity: 1.0 },
+  { z: -2.5, zh: "表皮",         en: "Epidermis",                 color: "#D8B896", emissive: "#3a2820", cellCount: 320, cellSize: [0.06, 0.10], packDensity: 0.95 },
+  { z: -5.0, zh: "真皮交界",     en: "Dermal-epidermal junction", color: "#A87A61", emissive: "#3a1c1c", cellCount: 260, cellSize: [0.07, 0.13], packDensity: 0.9 },
+  { z: -7.5, zh: "真皮 · 微血管", en: "Dermis · Capillaries",     color: "#7A4D5E", emissive: "#52173a", cellCount: 220, cellSize: [0.09, 0.16], packDensity: 0.85 },
+  { z:-10.0, zh: "細胞訊息",     en: "Cellular communication",    color: "#5B3268", emissive: "#7A4D8E", cellCount: 180, cellSize: [0.08, 0.14], packDensity: 0.8 },
+  { z:-12.5, zh: "外泌體抵達",   en: "Exosome arrival",           color: "#7A4D8E", emissive: "#CA8A04", cellCount: 140, cellSize: [0.06, 0.10], packDensity: 0.7 },
 ];
 
-function CellTexture({ color, opacity }: { color: string; opacity: number }) {
-  // Procedural cell-like points on a plane (each "stratum")
-  const ref = useRef<THREE.Points>(null);
-  const positions = useMemo(() => {
-    const arr = new Float32Array(800 * 3);
-    for (let i = 0; i < 800; i++) {
-      arr[i * 3] = (Math.random() - 0.5) * 14;
-      arr[i * 3 + 1] = (Math.random() - 0.5) * 14;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+function StratumLayer({
+  stratum,
+  cameraZ,
+  globalT,
+}: {
+  stratum: Stratum;
+  cameraZ: number;
+  globalT: number;
+}) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+
+  // Fixed cell positions per stratum — packed within a disc
+  const cells = useMemo(() => {
+    const arr: { x: number; y: number; z: number; size: number; phase: number }[] = [];
+    for (let i = 0; i < stratum.cellCount; i++) {
+      // Polar distribution + jitter for organic packing
+      const r = Math.sqrt(Math.random()) * 7 * stratum.packDensity;
+      const theta = Math.random() * Math.PI * 2;
+      arr.push({
+        x: Math.cos(theta) * r,
+        y: Math.sin(theta) * r * 0.62, // ellipse, more horizontal spread
+        z: (Math.random() - 0.5) * 0.7, // slight depth jitter
+        size: stratum.cellSize[0] + Math.random() * (stratum.cellSize[1] - stratum.cellSize[0]),
+        phase: Math.random() * Math.PI * 2,
+      });
     }
     return arr;
-  }, []);
+  }, [stratum]);
 
-  useFrame((s) => {
-    if (!ref.current) return;
-    ref.current.rotation.z = s.clock.getElapsedTime() * 0.012;
+  // Distance to camera → fade
+  const distance = Math.abs(cameraZ - stratum.z);
+  const opacity = THREE.MathUtils.clamp(1 - distance * 0.18, 0, 1);
+
+  useFrame(() => {
+    if (!ref.current || opacity < 0.02) return;
+    cells.forEach((c, i) => {
+      const breath = 0.93 + 0.07 * Math.sin(globalT * 1.2 + c.phase);
+      dummy.position.set(c.x, c.y, c.z);
+      dummy.scale.setScalar(c.size * breath);
+      dummy.updateMatrix();
+      ref.current!.setMatrixAt(i, dummy.matrix);
+    });
+    ref.current.instanceMatrix.needsUpdate = true;
+    // Per-frame opacity update via material
+    const mat = ref.current.material as THREE.MeshStandardMaterial;
+    if (mat) {
+      mat.opacity = opacity;
+      mat.emissiveIntensity = 0.4 + opacity * 0.4;
+    }
   });
 
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={800}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.05}
-        color={color}
-        transparent
-        opacity={opacity}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        sizeAttenuation
-      />
-    </points>
-  );
-}
-
-function SkinStratum({
-  z,
-  color,
-  cameraZ,
-}: {
-  z: number;
-  color: string;
-  cameraZ: number;
-}) {
-  // Distance to camera → opacity fade in/out
-  // Wider falloff so strata are visible across a longer scroll range
-  const distance = Math.abs(cameraZ - z);
-  const opacity = THREE.MathUtils.clamp(1 - distance * 0.18, 0, 0.95);
+  if (opacity < 0.01) return null;
 
   return (
-    <group position={[0, 0, z]}>
-      {/* Translucent plane (larger, fills viewport) */}
-      <mesh>
-        <planeGeometry args={[24, 24, 32, 32]} />
+    <group position={[0, 0, stratum.z]}>
+      <instancedMesh ref={ref} args={[undefined, undefined, stratum.cellCount]}>
+        <icosahedronGeometry args={[1, 1]} />
         <meshStandardMaterial
-          color={color}
+          color={stratum.color}
+          emissive={stratum.emissive}
+          emissiveIntensity={0.6}
+          roughness={0.5}
+          metalness={0.0}
           transparent
-          opacity={opacity * 0.5}
-          side={THREE.DoubleSide}
-          roughness={0.6}
-          emissive={color}
-          emissiveIntensity={0.25}
+          opacity={opacity}
+          depthWrite={false}
         />
-      </mesh>
-      {/* Cell-like points */}
-      <CellTexture color={color} opacity={opacity * 0.9} />
+      </instancedMesh>
     </group>
   );
 }
 
-function ExosomeDescent({ cameraZ }: { cameraZ: number }) {
-  // Show exosomes only in deep layers
-  const visible = cameraZ < -3;
-  const ref = useRef<THREE.Group>(null);
+function ExosomesArrive({ cameraZ, globalT }: { cameraZ: number; globalT: number }) {
+  // Activate when camera enters the deepest two strata
+  const visible = cameraZ < -8;
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  const exosomes = useMemo(
-    () =>
-      Array.from({ length: 24 }, () => ({
-        x: (Math.random() - 0.5) * 8,
-        y: (Math.random() - 0.5) * 6 + 2,
-        z: -3 - Math.random() * 7,
-        speed: 0.3 + Math.random() * 0.5,
-        scale: 0.06 + Math.random() * 0.08,
-      })),
-    []
-  );
+  const exosomes = useMemo(() => {
+    return Array.from({ length: 36 }, (_, i) => ({
+      seedX: (Math.random() - 0.5) * 9,
+      seedY: -3 - Math.random() * 4,
+      seedZ: -10 - Math.random() * 4,
+      speed: 0.22 + Math.random() * 0.45,
+      phase: i * 0.41,
+      size: 0.10 + Math.random() * 0.10,
+    }));
+  }, []);
 
-  useFrame((s, delta) => {
+  useFrame(() => {
     if (!ref.current || !visible) return;
-    ref.current.children.forEach((c, i) => {
-      const ex = exosomes[i];
-      c.position.y -= delta * ex.speed * 0.5;
-      if (c.position.y < -4) c.position.y = 4;
-      c.rotation.y += delta * 0.4;
+    exosomes.forEach((e, i) => {
+      const t = globalT * e.speed + e.phase;
+      const yLoop = ((t % 6) - 3) * 1.2; // ascending loop
+      dummy.position.set(
+        e.seedX + Math.sin(t * 0.8) * 0.3,
+        e.seedY + yLoop,
+        e.seedZ + Math.cos(t * 0.6) * 0.25
+      );
+      dummy.scale.setScalar(e.size);
+      ref.current!.setMatrixAt(i, dummy.matrix);
+      dummy.updateMatrix();
+      ref.current!.setMatrixAt(i, dummy.matrix);
     });
+    ref.current.instanceMatrix.needsUpdate = true;
   });
 
   if (!visible) return null;
 
   return (
-    <group ref={ref}>
-      {exosomes.map((e, i) => (
-        <mesh key={i} position={[e.x, e.y, e.z]} scale={e.scale}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshPhysicalMaterial
-            color="#7A4D8E"
-            emissive="#A374B8"
-            emissiveIntensity={0.5}
-            transmission={0.5}
-            roughness={0.4}
-            transparent
-            opacity={0.85}
-          />
-        </mesh>
-      ))}
-    </group>
+    <instancedMesh ref={ref} args={[undefined, undefined, exosomes.length]}>
+      <icosahedronGeometry args={[1, 2]} />
+      <meshStandardMaterial
+        color="#CA8A04"
+        emissive="#E8B23F"
+        emissiveIntensity={1.6}
+        roughness={0.3}
+        metalness={0.1}
+        toneMapped={false}
+        transparent
+        opacity={0.95}
+      />
+    </instancedMesh>
   );
 }
 
 function CameraRig({ progress }: { progress: number }) {
   const { camera } = useThree();
   useFrame(() => {
-    // Camera flies *through* the strata — start just in front of stratum 0
-    // and dive past stratum 5 (z=-10). Range: z=1 → z=-11.
-    const targetZ = 1 - progress * 12;
+    // Camera flies *through* the strata: z = +1 → -14
+    const targetZ = 1 - progress * 15;
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 0.08);
+    // Subtle x/y sway as we dive (organic feel)
+    camera.position.x = THREE.MathUtils.lerp(
+      camera.position.x,
+      Math.sin(progress * Math.PI * 1.5) * 0.6,
+      0.05
+    );
+    camera.position.y = THREE.MathUtils.lerp(
+      camera.position.y,
+      Math.cos(progress * Math.PI * 1.0) * 0.4,
+      0.05
+    );
     camera.lookAt(0, 0, targetZ - 2);
   });
   return null;
 }
 
 function SkinScene({ progress }: { progress: number }) {
-  // Track current camera z for stratum fade calc
   const [camZ, setCamZ] = useState(1);
+  const [globalT, setGlobalT] = useState(0);
   const { camera } = useThree();
-  useFrame(() => setCamZ(camera.position.z));
+  useFrame((s) => {
+    setCamZ(camera.position.z);
+    setGlobalT(s.clock.getElapsedTime());
+  });
 
   return (
     <>
       <color attach="background" args={["#0A0A0D"]} />
-      <ambientLight intensity={0.3} />
-      <pointLight
-        position={[0, 0, camZ + 1]}
-        intensity={1.4}
-        color="#F5F0E8"
-        distance={6}
-      />
-      <pointLight
-        position={[2, 2, camZ - 3]}
-        intensity={1.0}
-        color="#CA8A04"
-        distance={6}
-      />
+      <fog attach="fog" args={["#0A0A0D", Math.max(0.5, -camZ + 1), Math.max(8, -camZ + 8)]} />
+      <ambientLight intensity={0.4} />
+      <pointLight position={[0, 0, camZ + 1.5]} intensity={3} color="#F5E8C8" distance={6} />
+      <pointLight position={[3, 2, camZ - 2]} intensity={2} color="#CA8A04" distance={8} />
+      <pointLight position={[-3, -2, camZ - 4]} intensity={2.5} color="#7A4D8E" distance={10} />
 
       <CameraRig progress={progress} />
 
       {STRATA.map((s) => (
-        <SkinStratum key={s.z} z={s.z} color={s.color} cameraZ={camZ} />
+        <StratumLayer key={s.z} stratum={s} cameraZ={camZ} globalT={globalT} />
       ))}
 
-      <ExosomeDescent cameraZ={camZ} />
+      <ExosomesArrive cameraZ={camZ} globalT={globalT} />
     </>
   );
 }
@@ -206,7 +226,6 @@ export function LuxeSkinJourney() {
     return progress.on("change", setProgressVal);
   }, [progress]);
 
-  // Active stratum index
   const activeIdx = Math.min(
     STRATA.length - 1,
     Math.floor(progressVal * STRATA.length)
@@ -217,15 +236,14 @@ export function LuxeSkinJourney() {
       id="skin"
       ref={containerRef}
       className="relative bg-luxe-bgBase"
-      style={{ height: "400vh" }}
+      style={{ height: "500vh" }}
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden">
-        {/* 3D canvas (full screen) */}
         <div className="absolute inset-0">
           <Canvas
-            camera={{ position: [0, 0, 1], fov: 60 }}
+            camera={{ position: [0, 0, 1], fov: 65 }}
             dpr={[1, 1.5]}
-            gl={{ antialias: true, alpha: true }}
+            gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
           >
             <Suspense fallback={null}>
               <SkinScene progress={progressVal} />
@@ -233,60 +251,63 @@ export function LuxeSkinJourney() {
           </Canvas>
         </div>
 
-        {/* Atmospheric vignette */}
+        {/* Vignette overlay for cinematic depth */}
         <div
           aria-hidden
-          className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_30%,#0A0A0D_85%)]"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 80% at center, transparent 30%, rgba(10,10,13,0.6) 70%, rgba(10,10,13,0.95) 100%)",
+          }}
         />
 
-        {/* Top: section label */}
+        {/* Section eyebrow */}
         <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 text-center pointer-events-none">
-          <p className="font-italic italic text-luxe-gold/70 text-sm tracking-[0.5em] uppercase">
+          <p className="font-italic italic text-luxe-gold/80 text-sm tracking-[0.5em] uppercase">
             III · Skin Journey
           </p>
         </div>
 
-        {/* Bottom: active stratum label (animates between layers) */}
-        <div className="absolute bottom-20 left-0 right-0 z-20 px-6 text-center pointer-events-none">
+        {/* Stratum label */}
+        <div className="absolute bottom-24 left-0 right-0 z-20 px-6 text-center pointer-events-none">
           <motion.div
             key={activeIdx}
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-2"
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-3"
           >
-            <p className="font-italic italic text-luxe-ivoryFade text-[0.7rem] tracking-[0.4em] uppercase">
-              {STRATA[activeIdx].label}
+            <p className="font-italic italic text-luxe-ivoryFade text-[0.75rem] tracking-[0.45em] uppercase">
+              {STRATA[activeIdx].en}
             </p>
-            <h3 className="font-serif text-luxe-ivory text-3xl md:text-5xl font-medium tracking-tight">
+            <h3 className="font-serif-tc text-luxe-ivory text-4xl md:text-6xl font-medium tracking-tight">
               {STRATA[activeIdx].zh}
             </h3>
           </motion.div>
 
-          {/* Progress dots */}
-          <div className="flex items-center justify-center gap-2 mt-8">
+          <div className="flex items-center justify-center gap-2 mt-10">
             {STRATA.map((_, i) => (
               <span
                 key={i}
                 className={`block h-px transition-all duration-700 ${
                   i === activeIdx
-                    ? "w-12 bg-luxe-gold"
+                    ? "w-14 bg-luxe-gold"
                     : i < activeIdx
-                    ? "w-6 bg-luxe-gold/40"
-                    : "w-6 bg-luxe-ivory/15"
+                    ? "w-7 bg-luxe-gold/40"
+                    : "w-7 bg-luxe-ivory/15"
                 }`}
               />
             ))}
           </div>
         </div>
 
-        {/* Right: progress percent */}
-        <div className="absolute top-1/2 right-6 -translate-y-1/2 z-20 pointer-events-none hidden md:block">
+        {/* Depth meter */}
+        <div className="absolute top-1/2 right-8 -translate-y-1/2 z-20 pointer-events-none hidden md:block">
           <div className="flex flex-col items-end gap-2">
-            <span className="font-display italic text-luxe-gold text-5xl font-medium tabular-nums leading-none">
+            <span className="font-display italic text-luxe-gold text-6xl font-medium tabular-nums leading-none">
               {String(Math.round(progressVal * 100)).padStart(2, "0")}
             </span>
-            <span className="font-italic italic text-luxe-ivoryFade text-[0.65rem] tracking-[0.4em] uppercase">
+            <span className="font-italic italic text-luxe-ivoryFade text-[0.7rem] tracking-[0.45em] uppercase">
               depth
             </span>
           </div>
