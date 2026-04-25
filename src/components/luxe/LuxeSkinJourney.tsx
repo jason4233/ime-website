@@ -47,17 +47,23 @@ function StratumLayer({
   const ref = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  // Fixed cell positions per stratum — packed within a disc
+  // Tunnel-of-cells: each stratum is a SLAB extruded along z (depth 2.0),
+  // cells densely packed in a tube around the camera's flight path so we
+  // ALWAYS have cells nearby. Tube radius ~3, hollow center for camera path.
   const cells = useMemo(() => {
     const arr: { x: number; y: number; z: number; size: number; phase: number }[] = [];
     for (let i = 0; i < stratum.cellCount; i++) {
-      // Polar distribution + jitter for organic packing
-      const r = Math.sqrt(Math.random()) * 7 * stratum.packDensity;
+      // Hollow tube: r between 0.8 and 3.5
+      const minR = 0.8;
+      const maxR = 3.5 * stratum.packDensity * 1.6;
+      const r = minR + Math.sqrt(Math.random()) * (maxR - minR);
       const theta = Math.random() * Math.PI * 2;
+      // Distribute along z within stratum slab (±1.0)
+      const localZ = (Math.random() - 0.5) * 2.0;
       arr.push({
         x: Math.cos(theta) * r,
-        y: Math.sin(theta) * r * 0.62, // ellipse, more horizontal spread
-        z: (Math.random() - 0.5) * 0.7, // slight depth jitter
+        y: Math.sin(theta) * r,
+        z: localZ,
         size: stratum.cellSize[0] + Math.random() * (stratum.cellSize[1] - stratum.cellSize[0]),
         phase: Math.random() * Math.PI * 2,
       });
@@ -65,9 +71,9 @@ function StratumLayer({
     return arr;
   }, [stratum]);
 
-  // Distance to camera → fade
-  const distance = Math.abs(cameraZ - stratum.z);
-  const opacity = THREE.MathUtils.clamp(1 - distance * 0.18, 0, 1);
+  // Slab covers z in [stratum.z - 1, stratum.z + 1]. Visible if camera within ±2 of slab.
+  const dz = cameraZ - stratum.z;
+  const opacity = THREE.MathUtils.clamp(1 - Math.max(0, Math.abs(dz) - 1) * 0.45, 0, 1);
 
   useFrame(() => {
     if (!ref.current || opacity < 0.02) return;
@@ -196,7 +202,7 @@ function SkinScene({ progress }: { progress: number }) {
   return (
     <>
       <color attach="background" args={["#0A0A0D"]} />
-      <fog attach="fog" args={["#0A0A0D", Math.max(0.5, -camZ + 1), Math.max(8, -camZ + 8)]} />
+      <fog attach="fog" args={["#0A0A0D", 2, 14]} />
       <ambientLight intensity={0.4} />
       <pointLight position={[0, 0, camZ + 1.5]} intensity={3} color="#F5E8C8" distance={6} />
       <pointLight position={[3, 2, camZ - 2]} intensity={2} color="#CA8A04" distance={8} />
@@ -251,13 +257,13 @@ export function LuxeSkinJourney() {
           </Canvas>
         </div>
 
-        {/* Vignette overlay for cinematic depth */}
+        {/* Subtle vignette only — don't hide the cells */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 70% 80% at center, transparent 30%, rgba(10,10,13,0.6) 70%, rgba(10,10,13,0.95) 100%)",
+              "radial-gradient(ellipse 90% 90% at center, transparent 60%, rgba(10,10,13,0.55) 100%)",
           }}
         />
 
