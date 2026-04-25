@@ -27,12 +27,12 @@ type Stratum = {
 };
 
 const STRATA: Stratum[] = [
-  { z:  0.0, zh: "角質層",       en: "Stratum corneum",           color: "#E8D5C2", emissive: "#3a2820", cellCount: 380, cellSize: [0.04, 0.07], packDensity: 1.0 },
-  { z: -2.5, zh: "表皮",         en: "Epidermis",                 color: "#D8B896", emissive: "#3a2820", cellCount: 320, cellSize: [0.06, 0.10], packDensity: 0.95 },
-  { z: -5.0, zh: "真皮交界",     en: "Dermal-epidermal junction", color: "#A87A61", emissive: "#3a1c1c", cellCount: 260, cellSize: [0.07, 0.13], packDensity: 0.9 },
-  { z: -7.5, zh: "真皮 · 微血管", en: "Dermis · Capillaries",     color: "#7A4D5E", emissive: "#52173a", cellCount: 220, cellSize: [0.09, 0.16], packDensity: 0.85 },
-  { z:-10.0, zh: "細胞訊息",     en: "Cellular communication",    color: "#5B3268", emissive: "#7A4D8E", cellCount: 180, cellSize: [0.08, 0.14], packDensity: 0.8 },
-  { z:-12.5, zh: "外泌體抵達",   en: "Exosome arrival",           color: "#7A4D8E", emissive: "#CA8A04", cellCount: 140, cellSize: [0.06, 0.10], packDensity: 0.7 },
+  { z:  0.0, zh: "角質層",       en: "Stratum corneum",           color: "#E8D5C2", emissive: "#5a3820", cellCount: 280, cellSize: [0.18, 0.32], packDensity: 0.6 },
+  { z: -2.5, zh: "表皮",         en: "Epidermis",                 color: "#D8B896", emissive: "#5a3820", cellCount: 240, cellSize: [0.22, 0.40], packDensity: 0.55 },
+  { z: -5.0, zh: "真皮交界",     en: "Dermal-epidermal junction", color: "#A87A61", emissive: "#5a1c1c", cellCount: 200, cellSize: [0.26, 0.46], packDensity: 0.5 },
+  { z: -7.5, zh: "真皮 · 微血管", en: "Dermis · Capillaries",     color: "#9A4D6E", emissive: "#822A4A", cellCount: 180, cellSize: [0.30, 0.55], packDensity: 0.5 },
+  { z:-10.0, zh: "細胞訊息",     en: "Cellular communication",    color: "#7B3288", emissive: "#A374B8", cellCount: 160, cellSize: [0.26, 0.46], packDensity: 0.45 },
+  { z:-12.5, zh: "外泌體抵達",   en: "Exosome arrival",           color: "#A374B8", emissive: "#E8B23F", cellCount: 120, cellSize: [0.18, 0.34], packDensity: 0.4 },
 ];
 
 function StratumLayer({
