@@ -8,182 +8,199 @@ import { motion, useScroll, useTransform } from "framer-motion";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // ═══════════════════════════════════════════════════════════════
-//   LuxeSkinJourney — scroll-linked dive through skin layers
-//   - Each stratum is densely packed instanced spheres (real "cells")
-//   - 6 strata, each visually distinct (size, density, color)
-//   - Camera dives through Z; opacity fades by distance
-//   - Deepest stratum: exosomes emerge and ascend
+//   LuxeSkinJourney — flying through tissue
+//   Strategy: ONE big Points field with 4000 cells distributed in a
+//   long tube along z-axis (z = +2 → -16). Per-frame color/size based
+//   on which stratum the camera is currently passing through.
 // ═══════════════════════════════════════════════════════════════
 
-type Stratum = {
-  z: number;
-  zh: string;
-  en: string;
-  color: string;
-  emissive: string;
-  cellCount: number;
-  cellSize: [number, number]; // min/max
-  packDensity: number; // tighter cluster
-};
-
-const STRATA: Stratum[] = [
-  { z:  0.0, zh: "角質層",       en: "Stratum corneum",           color: "#E8D5C2", emissive: "#5a3820", cellCount: 280, cellSize: [0.18, 0.32], packDensity: 0.6 },
-  { z: -2.5, zh: "表皮",         en: "Epidermis",                 color: "#D8B896", emissive: "#5a3820", cellCount: 240, cellSize: [0.22, 0.40], packDensity: 0.55 },
-  { z: -5.0, zh: "真皮交界",     en: "Dermal-epidermal junction", color: "#A87A61", emissive: "#5a1c1c", cellCount: 200, cellSize: [0.26, 0.46], packDensity: 0.5 },
-  { z: -7.5, zh: "真皮 · 微血管", en: "Dermis · Capillaries",     color: "#9A4D6E", emissive: "#822A4A", cellCount: 180, cellSize: [0.30, 0.55], packDensity: 0.5 },
-  { z:-10.0, zh: "細胞訊息",     en: "Cellular communication",    color: "#7B3288", emissive: "#A374B8", cellCount: 160, cellSize: [0.26, 0.46], packDensity: 0.45 },
-  { z:-12.5, zh: "外泌體抵達",   en: "Exosome arrival",           color: "#A374B8", emissive: "#E8B23F", cellCount: 120, cellSize: [0.18, 0.34], packDensity: 0.4 },
+const STRATA = [
+  { z:  0.0, zh: "角質層",       en: "Stratum corneum",           color: new THREE.Color("#F5C9A8") },
+  { z: -2.5, zh: "表皮",         en: "Epidermis",                 color: new THREE.Color("#E8B07F") },
+  { z: -5.0, zh: "真皮交界",     en: "Dermal-epidermal junction", color: new THREE.Color("#C28066") },
+  { z: -7.5, zh: "真皮 · 微血管", en: "Dermis · Capillaries",     color: new THREE.Color("#B85A7A") },
+  { z:-10.0, zh: "細胞訊息",     en: "Cellular communication",    color: new THREE.Color("#A374B8") },
+  { z:-12.5, zh: "外泌體抵達",   en: "Exosome arrival",           color: new THREE.Color("#E8B23F") },
 ];
 
-function StratumLayer({
-  stratum,
-  cameraZ,
-  globalT,
-}: {
-  stratum: Stratum;
-  cameraZ: number;
-  globalT: number;
-}) {
-  const ref = useRef<THREE.InstancedMesh>(null);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
+const PARTICLE_COUNT = 4500;
 
-  // Tunnel-of-cells: each stratum is a SLAB extruded along z (depth 2.0),
-  // cells densely packed in a tube around the camera's flight path so we
-  // ALWAYS have cells nearby. Tube radius ~3, hollow center for camera path.
-  const cells = useMemo(() => {
-    const arr: { x: number; y: number; z: number; size: number; phase: number }[] = [];
-    for (let i = 0; i < stratum.cellCount; i++) {
-      // Hollow tube: r between 0.8 and 3.5
-      const minR = 0.8;
-      const maxR = 3.5 * stratum.packDensity * 1.6;
-      const r = minR + Math.sqrt(Math.random()) * (maxR - minR);
-      const theta = Math.random() * Math.PI * 2;
-      // Distribute along z within stratum slab (±1.0)
-      const localZ = (Math.random() - 0.5) * 2.0;
-      arr.push({
-        x: Math.cos(theta) * r,
-        y: Math.sin(theta) * r,
-        z: localZ,
-        size: stratum.cellSize[0] + Math.random() * (stratum.cellSize[1] - stratum.cellSize[0]),
-        phase: Math.random() * Math.PI * 2,
-      });
-    }
-    return arr;
-  }, [stratum]);
-
-  // Slab covers z in [stratum.z - 1, stratum.z + 1]. Visible if camera within ±2 of slab.
-  const dz = cameraZ - stratum.z;
-  const opacity = THREE.MathUtils.clamp(1 - Math.max(0, Math.abs(dz) - 1) * 0.45, 0, 1);
-
-  useFrame(() => {
-    if (!ref.current || opacity < 0.02) return;
-    cells.forEach((c, i) => {
-      const breath = 0.93 + 0.07 * Math.sin(globalT * 1.2 + c.phase);
-      dummy.position.set(c.x, c.y, c.z);
-      dummy.scale.setScalar(c.size * breath);
-      dummy.updateMatrix();
-      ref.current!.setMatrixAt(i, dummy.matrix);
-    });
-    ref.current.instanceMatrix.needsUpdate = true;
-    // Per-frame opacity update via material
-    const mat = ref.current.material as THREE.MeshStandardMaterial;
-    if (mat) {
-      mat.opacity = opacity;
-      mat.emissiveIntensity = 0.4 + opacity * 0.4;
-    }
-  });
-
-  if (opacity < 0.01) return null;
-
-  return (
-    <group position={[0, 0, stratum.z]}>
-      <instancedMesh ref={ref} args={[undefined, undefined, stratum.cellCount]}>
-        <icosahedronGeometry args={[1, 1]} />
-        <meshStandardMaterial
-          color={stratum.color}
-          emissive={stratum.emissive}
-          emissiveIntensity={0.6}
-          roughness={0.5}
-          metalness={0.0}
-          transparent
-          opacity={opacity}
-          depthWrite={false}
-        />
-      </instancedMesh>
-    </group>
-  );
+function colorAtZ(z: number): THREE.Color {
+  // Interpolate between adjacent strata colors based on z position
+  // Strata z: 0, -2.5, -5, -7.5, -10, -12.5
+  const idxFloat = (-z + 0) / 2.5; // 0 at z=0, 5 at z=-12.5
+  const i = Math.max(0, Math.min(STRATA.length - 1, Math.floor(idxFloat)));
+  const j = Math.max(0, Math.min(STRATA.length - 1, i + 1));
+  const t = THREE.MathUtils.clamp(idxFloat - i, 0, 1);
+  const out = STRATA[i].color.clone().lerp(STRATA[j].color, t);
+  return out;
 }
 
-function ExosomesArrive({ cameraZ, globalT }: { cameraZ: number; globalT: number }) {
-  // Activate when camera enters the deepest two strata
-  const visible = cameraZ < -8;
-  const ref = useRef<THREE.InstancedMesh>(null);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
+function CellTunnel() {
+  const ref = useRef<THREE.Points>(null);
+  const { camera } = useThree();
 
-  const exosomes = useMemo(() => {
-    return Array.from({ length: 36 }, (_, i) => ({
-      seedX: (Math.random() - 0.5) * 9,
-      seedY: -3 - Math.random() * 4,
-      seedZ: -10 - Math.random() * 4,
-      speed: 0.22 + Math.random() * 0.45,
-      phase: i * 0.41,
-      size: 0.10 + Math.random() * 0.10,
-    }));
+  // Generate cells in a tube along z = +2 → -16, tube radius 0.8 → 4.5
+  const { positions, colors, sizes } = useMemo(() => {
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const colors = new Float32Array(PARTICLE_COUNT * 3);
+    const sizes = new Float32Array(PARTICLE_COUNT);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      // Z spans the full tunnel
+      const z = 3 - Math.random() * 19; // +3 → -16
+      // Tube cross-section: hollow ring r=0.8 to 4.5
+      const r = 0.8 + Math.sqrt(Math.random()) * 3.7;
+      const theta = Math.random() * Math.PI * 2;
+      positions[i * 3] = Math.cos(theta) * r;
+      positions[i * 3 + 1] = Math.sin(theta) * r;
+      positions[i * 3 + 2] = z;
+      // Initial color (will be updated per-frame based on camera Z)
+      const c = colorAtZ(z);
+      colors[i * 3] = c.r * 1.6;       // HDR boost
+      colors[i * 3 + 1] = c.g * 1.4;
+      colors[i * 3 + 2] = c.b * 1.4;
+      // Size variance — small sparse points for flowing through
+      sizes[i] = 0.4 + Math.random() * 0.8;
+    }
+    return { positions, colors, sizes };
   }, []);
 
   useFrame(() => {
+    if (!ref.current) return;
+    const camZ = camera.position.z;
+    const colorArr = ref.current.geometry.attributes.color.array as Float32Array;
+    const posArr = ref.current.geometry.attributes.position.array as Float32Array;
+
+    // Update each cell's color based on its z relative to current strata
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const z = posArr[i * 3 + 2];
+      const c = colorAtZ(z);
+      // Distance fade from camera — closer = brighter
+      const distZ = Math.abs(camZ - z);
+      const fade = THREE.MathUtils.clamp(1 - distZ * 0.18, 0.05, 1);
+      // HDR boost for bloom-friendly emissive look
+      colorArr[i * 3]     = c.r * 1.6 * fade;
+      colorArr[i * 3 + 1] = c.g * 1.4 * fade;
+      colorArr[i * 3 + 2] = c.b * 1.4 * fade;
+    }
+    ref.current.geometry.attributes.color.needsUpdate = true;
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={PARTICLE_COUNT}
+          array={positions}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-color"
+          count={PARTICLE_COUNT}
+          array={colors}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-size"
+          count={PARTICLE_COUNT}
+          array={sizes}
+          itemSize={1}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.08}
+        sizeAttenuation
+        vertexColors
+        transparent
+        opacity={0.95}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
+    </points>
+  );
+}
+
+function ExosomesAscent({ progress }: { progress: number }) {
+  // Activate in deep half of journey
+  const visible = progress > 0.55;
+  const ref = useRef<THREE.Points>(null);
+  const { camera } = useThree();
+
+  const { positions, colors, sizes } = useMemo(() => {
+    const N = 60;
+    const positions = new Float32Array(N * 3);
+    const colors = new Float32Array(N * 3);
+    const sizes = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const r = Math.sqrt(Math.random()) * 2.6;
+      const theta = Math.random() * Math.PI * 2;
+      positions[i * 3] = Math.cos(theta) * r;
+      positions[i * 3 + 1] = Math.sin(theta) * r;
+      positions[i * 3 + 2] = -8 - Math.random() * 8;
+      colors[i * 3] = 1.8;
+      colors[i * 3 + 1] = 1.3;
+      colors[i * 3 + 2] = 0.5;
+      sizes[i] = 1.2 + Math.random() * 0.8;
+    }
+    return { positions, colors, sizes };
+  }, []);
+
+  useFrame((s, delta) => {
     if (!ref.current || !visible) return;
-    exosomes.forEach((e, i) => {
-      const t = globalT * e.speed + e.phase;
-      const yLoop = ((t % 6) - 3) * 1.2; // ascending loop
-      dummy.position.set(
-        e.seedX + Math.sin(t * 0.8) * 0.3,
-        e.seedY + yLoop,
-        e.seedZ + Math.cos(t * 0.6) * 0.25
-      );
-      dummy.scale.setScalar(e.size);
-      ref.current!.setMatrixAt(i, dummy.matrix);
-      dummy.updateMatrix();
-      ref.current!.setMatrixAt(i, dummy.matrix);
-    });
-    ref.current.instanceMatrix.needsUpdate = true;
+    const t = s.clock.getElapsedTime();
+    const arr = ref.current.geometry.attributes.position.array as Float32Array;
+    for (let i = 0; i < arr.length / 3; i++) {
+      arr[i * 3 + 1] += delta * 0.4;
+      // Wrap upward
+      if (arr[i * 3 + 1] > 4) arr[i * 3 + 1] = -4;
+      // Subtle horizontal sway
+      arr[i * 3] += Math.sin(t * 0.8 + i) * delta * 0.04;
+    }
+    ref.current.geometry.attributes.position.needsUpdate = true;
+    // Follow camera depth-wise
+    if (ref.current) ref.current.position.z = camera.position.z * 0.3;
   });
 
   if (!visible) return null;
 
   return (
-    <instancedMesh ref={ref} args={[undefined, undefined, exosomes.length]}>
-      <icosahedronGeometry args={[1, 2]} />
-      <meshStandardMaterial
-        color="#CA8A04"
-        emissive="#E8B23F"
-        emissiveIntensity={1.6}
-        roughness={0.3}
-        metalness={0.1}
-        toneMapped={false}
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
+        <bufferAttribute attach="attributes-color" count={colors.length / 3} array={colors} itemSize={3} />
+        <bufferAttribute attach="attributes-size" count={sizes.length} array={sizes} itemSize={1} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.18}
+        sizeAttenuation
+        vertexColors
         transparent
         opacity={0.95}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
       />
-    </instancedMesh>
+    </points>
   );
 }
 
 function CameraRig({ progress }: { progress: number }) {
   const { camera } = useThree();
   useFrame(() => {
-    // Camera flies *through* the strata: z = +1 → -14
-    const targetZ = 1 - progress * 15;
+    const targetZ = 2 - progress * 16;
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 0.08);
-    // Subtle x/y sway as we dive (organic feel)
+    // Subtle organic sway
     camera.position.x = THREE.MathUtils.lerp(
       camera.position.x,
-      Math.sin(progress * Math.PI * 1.5) * 0.6,
-      0.05
+      Math.sin(progress * Math.PI * 1.4) * 0.4,
+      0.06
     );
     camera.position.y = THREE.MathUtils.lerp(
       camera.position.y,
-      Math.cos(progress * Math.PI * 1.0) * 0.4,
-      0.05
+      Math.cos(progress * Math.PI * 0.9) * 0.3,
+      0.06
     );
     camera.lookAt(0, 0, targetZ - 2);
   });
@@ -191,30 +208,15 @@ function CameraRig({ progress }: { progress: number }) {
 }
 
 function SkinScene({ progress }: { progress: number }) {
-  const [camZ, setCamZ] = useState(1);
-  const [globalT, setGlobalT] = useState(0);
-  const { camera } = useThree();
-  useFrame((s) => {
-    setCamZ(camera.position.z);
-    setGlobalT(s.clock.getElapsedTime());
-  });
-
   return (
     <>
       <color attach="background" args={["#0A0A0D"]} />
-      <fog attach="fog" args={["#0A0A0D", 2, 14]} />
-      <ambientLight intensity={0.4} />
-      <pointLight position={[0, 0, camZ + 1.5]} intensity={3} color="#F5E8C8" distance={6} />
-      <pointLight position={[3, 2, camZ - 2]} intensity={2} color="#CA8A04" distance={8} />
-      <pointLight position={[-3, -2, camZ - 4]} intensity={2.5} color="#7A4D8E" distance={10} />
+      <fog attach="fog" args={["#0A0A0D", 1.5, 13]} />
+      <ambientLight intensity={0.5} />
 
       <CameraRig progress={progress} />
-
-      {STRATA.map((s) => (
-        <StratumLayer key={s.z} stratum={s} cameraZ={camZ} globalT={globalT} />
-      ))}
-
-      <ExosomesArrive cameraZ={camZ} globalT={globalT} />
+      <CellTunnel />
+      <ExosomesAscent progress={progress} />
     </>
   );
 }
@@ -247,7 +249,7 @@ export function LuxeSkinJourney() {
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <div className="absolute inset-0">
           <Canvas
-            camera={{ position: [0, 0, 1], fov: 65 }}
+            camera={{ position: [0, 0, 2], fov: 70 }}
             dpr={[1, 1.5]}
             gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
           >
@@ -257,17 +259,17 @@ export function LuxeSkinJourney() {
           </Canvas>
         </div>
 
-        {/* Subtle vignette only — don't hide the cells */}
+        {/* Soft cinematic vignette only at outer edges */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 90% 90% at center, transparent 60%, rgba(10,10,13,0.55) 100%)",
+              "radial-gradient(ellipse 95% 95% at center, transparent 70%, rgba(10,10,13,0.55) 100%)",
           }}
         />
 
-        {/* Section eyebrow */}
+        {/* Eyebrow */}
         <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20 text-center pointer-events-none">
           <p className="font-italic italic text-luxe-gold/80 text-sm tracking-[0.5em] uppercase">
             III · Skin Journey
@@ -307,7 +309,6 @@ export function LuxeSkinJourney() {
           </div>
         </div>
 
-        {/* Depth meter */}
         <div className="absolute top-1/2 right-8 -translate-y-1/2 z-20 pointer-events-none hidden md:block">
           <div className="flex flex-col items-end gap-2">
             <span className="font-display italic text-luxe-gold text-6xl font-medium tabular-nums leading-none">
