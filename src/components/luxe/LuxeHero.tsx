@@ -183,19 +183,19 @@ function Ampoule({ mousePower }: { mousePower: { current: number } }) {
       <mesh castShadow>
         <latheGeometry args={[points, 64]} />
         <MeshTransmissionMaterial
-          transmission={0.92}
-          thickness={1.4}
-          roughness={0.06}
+          transmission={0.78}
+          thickness={2.4}
+          roughness={0.08}
           ior={1.52}
-          chromaticAberration={0.08}
+          chromaticAberration={0.06}
           clearcoat={1}
           clearcoatRoughness={0.05}
-          attenuationColor={new THREE.Color("#D08F3F")}
-          attenuationDistance={0.28}
-          color={new THREE.Color("#FFE9C8")}
-          envMapIntensity={1.4}
+          attenuationColor={new THREE.Color("#7A4310")}
+          attenuationDistance={0.18}
+          color={new THREE.Color("#C68A38")}
+          envMapIntensity={0.85}
           backside
-          backsideThickness={0.3}
+          backsideThickness={0.45}
           samples={6}
           resolution={512}
         />
@@ -520,9 +520,10 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
             <fog attach="fog" args={["#0A0A0D", 6, 22]} />
 
             <Suspense fallback={null}>
-              {/* HDRI environment — warehouse preset has directional contrast,
-                  low intensity prevents bright fog inside the glass body. */}
-              <Environment preset="warehouse" background={false} environmentIntensity={0.45} />
+              {/* HDRI environment at very low intensity — provides spec
+                  highlights but does NOT flood the glass interior. The
+                  scene's drama comes from the chiaroscuro spotLights. */}
+              <Environment preset="warehouse" background={false} environmentIntensity={0.12} />
 
               <LightRig />
 
