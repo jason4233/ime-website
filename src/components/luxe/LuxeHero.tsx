@@ -137,7 +137,8 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
   const ref = useRef<THREE.Points>(null);
   const groupRef = useRef<THREE.Group>(null);
   const matRef = useRef<THREE.ShaderMaterial>(null);
-  const innerGlowRef = useRef<THREE.Mesh>(null);
+  // (innerGlowRef removed: the volumetric inner-glow mesh was deleted because
+  //  it rendered as a giant milky-white blob covering the bottle silhouette.)
   const { mouse, viewport, gl } = useThree();
 
   // Pre-compute target (bottle) and seed (random sphere) positions + per-particle attributes
@@ -243,13 +244,8 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
         1.0 + Math.sin(t * (Math.PI * 2 / 4.0)) * 0.025;
     }
 
-    // Inner volumetric glow — gentle scale & opacity throb
-    if (innerGlowRef.current) {
-      const s = 1.0 + Math.sin(t * 0.9) * 0.04;
-      innerGlowRef.current.scale.setScalar(s);
-      const mat = innerGlowRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.30 + Math.sin(t * 0.6) * 0.06;
-    }
+    // (Inner volumetric glow removed — it rendered as a milky white blob
+    //  covering the bottle. Particles + Sparkles now provide the lit feel.)
 
     // Rotate the whole group very slowly + subtle parallax to mouse
     if (groupRef.current) {
@@ -267,31 +263,10 @@ function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
 
   return (
     <group ref={groupRef}>
-      {/* Volumetric inner glow — sphere INSIDE the bottle silhouette,
-          additive blending → reads as warm light leaking through liquid. */}
-      <mesh ref={innerGlowRef} position={[0, -0.1, 0]}>
-        <sphereGeometry args={[0.34, 24, 24]} />
-        <meshBasicMaterial
-          color="#FFC857"
-          transparent
-          opacity={0.32}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </mesh>
-      {/* Secondary outer halo — broader, dimmer, gives volumetric feel */}
-      <mesh position={[0, -0.1, 0]}>
-        <sphereGeometry args={[0.65, 20, 20]} />
-        <meshBasicMaterial
-          color="#CA8A04"
-          transparent
-          opacity={0.08}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </mesh>
+      {/* Volumetric inner-glow spheres removed — they composited as a solid
+          milky-white oval over the bottle silhouette and the hero text.
+          The particle field + Sparkles + light rig give enough "lit from
+          within" feel without obscuring the silhouette or the headline. */}
 
       <points ref={ref}>
         <bufferGeometry>
