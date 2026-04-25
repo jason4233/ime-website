@@ -213,7 +213,7 @@ export function LuxeVial({ product }: VialProps) {
           {/* Spotlight backdrop */}
           <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(202,138,4,0.2),transparent_60%)] blur-3xl" />
           <Canvas
-            camera={{ position: [0, 0.2, 4.5], fov: 32 }}
+            camera={{ position: [0, 0, 7], fov: 28 }}
             dpr={[1, 1.5]}
             gl={{ antialias: true, alpha: true }}
           >

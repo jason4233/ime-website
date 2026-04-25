@@ -15,43 +15,63 @@ import { motion } from "framer-motion";
 //   on idle, then disperse on mouse move (cause-effect motion)
 // ═══════════════════════════════════════════════════════════════
 
-const PARTICLE_COUNT = 4500;
+const PARTICLE_COUNT = 5000;
 
-// Generate target positions: a parametric ampoule bottle silhouette
+// Bottle radius profile — piecewise smooth curve (called for arbitrary y)
+function bottleRadius(y: number): number {
+  if (y < -1.45) return 0;        // closed bottom
+  if (y < -1.30) {
+    // Bottom curve
+    const yn = (y + 1.45) / 0.15;
+    return 0.55 * Math.sqrt(Math.max(0, 1 - (1 - yn) * (1 - yn)));
+  }
+  if (y < 0.55) {
+    // Main body — slight inward curve at middle
+    const yn = (y + 1.30) / 1.85;
+    return 0.55 - 0.025 * Math.sin(yn * Math.PI);
+  }
+  if (y < 0.95) {
+    // Shoulder — narrows to neck
+    const yn = (y - 0.55) / 0.40;
+    return 0.55 - 0.39 * Math.pow(yn, 1.6);
+  }
+  if (y < 1.25) {
+    // Neck — thin column
+    return 0.16;
+  }
+  if (y < 1.45) {
+    // Cap rim — slight flare
+    const yn = (y - 1.25) / 0.20;
+    return 0.16 + 0.06 * yn;
+  }
+  return 0.22; // top of cap
+}
+
+// Generate target positions: VOLUMETRIC ampoule shape
+// Strategy: each particle gets random y in bottle range, then random angle
+// at that y's radius. This fills the SURFACE of the bottle silhouette
+// (rotation-symmetric solid), not a spiral.
 function bottlePositions(count: number): Float32Array {
   const pos = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
-    const t = i / count;
-    // Y from -1.6 (bottom) to +1.6 (top) — bottle vertical extent
-    const y = -1.6 + t * 3.2;
-
-    // Bottle radius profile (piecewise smooth curve)
-    let r: number;
-    if (y < -1.0) {
-      // Base — flat
-      r = 0.45;
-    } else if (y < 0.6) {
-      // Body — elegantly curved
-      const yn = (y + 1.0) / 1.6;
-      r = 0.45 - 0.05 * Math.sin(yn * Math.PI);
-    } else if (y < 1.1) {
-      // Shoulder — narrows
-      const yn = (y - 0.6) / 0.5;
-      r = 0.42 - 0.27 * yn;
-    } else if (y < 1.45) {
-      // Neck — thin
-      r = 0.15;
-    } else {
-      // Cap — slightly wider
-      r = 0.22;
+    // Uniform y across full bottle height
+    const y = -1.45 + Math.random() * 2.95; // -1.45 to 1.50
+    const r = bottleRadius(y);
+    if (r < 0.001) {
+      // Skip degenerate (closed cap)
+      pos[i * 3 + 0] = 0;
+      pos[i * 3 + 1] = y;
+      pos[i * 3 + 2] = 0;
+      continue;
     }
-
-    // Distribute on cylinder surface + small inward jitter for "liquid" feel
-    const angle = t * Math.PI * 2 * 11.7; // golden ratio spread
-    const jitter = (Math.random() - 0.5) * 0.04;
-    pos[i * 3 + 0] = (r + jitter) * Math.cos(angle);
+    // Random angle around bottle (full ring at each y)
+    const angle = Math.random() * Math.PI * 2;
+    // Inward jitter for liquid-glass thickness feel
+    const jitter = (Math.random() - 0.5) * 0.05;
+    const rr = Math.max(0, r + jitter);
+    pos[i * 3 + 0] = rr * Math.cos(angle);
     pos[i * 3 + 1] = y;
-    pos[i * 3 + 2] = (r + jitter) * Math.sin(angle);
+    pos[i * 3 + 2] = rr * Math.sin(angle);
   }
   return pos;
 }
@@ -253,10 +273,14 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
     ease();
   };
 
-  const headline = data?.headline ?? "妳值得，被細胞溫柔對待。";
+  // 寫死文字，不從 CMS 抓 — luxe 是 design 主導的頁面
+  const headline = "妳值得";
+  const headlineAccent = "被細胞溫柔對待。";
   const subline =
-    data?.subheadline ?? "每 1mL 安瓶 2,000 億顆臍帶間質幹細胞外泌體。";
-  const ctaText = data?.ctaText ?? "我想預約";
+    "每 1mL 安瓶 2,000 億顆臍帶間質幹細胞外泌體。";
+  const ctaText = "我想預約";
+  // suppress unused-data warning for now (data still informs layout decisions)
+  void data;
 
   // Hero parallax — content fades & translates as you scroll
   const heroProgress = Math.min(1, scrollY / 700);
@@ -324,24 +348,29 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
           Cellular Atelier · Est. 2025
         </motion.p>
 
-        {/* Headline */}
+        {/* Headline — restrained luxury: neutral ivory + accent only on tiny EN word */}
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.4, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif text-display-xl text-luxe-ivory leading-[0.95] tracking-[-0.025em] max-w-5xl mb-8"
+          className="font-serif-tc text-luxe-ivory leading-[1.15] tracking-[-0.01em] max-w-3xl mb-6 font-medium"
+          style={{ fontSize: "clamp(2.25rem, 5vw, 4.25rem)" }}
         >
-          {headline.split(/[，,]/).map((part, i) => (
-            <span key={i} className="block">
-              {i === 1 ? (
-                <span className="font-display italic text-luxe-gold">{part}</span>
-              ) : (
-                part
-              )}
-              {i === 0 && "，"}
-            </span>
-          ))}
+          <span className="block">{headline}</span>
+          <span className="block mt-1 text-luxe-ivoryDim font-light">
+            {headlineAccent}
+          </span>
         </motion.h1>
+
+        {/* English italic whisper — tiny accent, where the gold lives */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.4, delay: 0.85 }}
+          className="font-italic italic text-luxe-gold/70 text-base md:text-lg tracking-wider mb-10"
+        >
+          a letter, written by your own cells.
+        </motion.p>
 
         {/* Subline */}
         <motion.p

@@ -73,24 +73,27 @@ function SkinStratum({
   cameraZ: number;
 }) {
   // Distance to camera → opacity fade in/out
+  // Wider falloff so strata are visible across a longer scroll range
   const distance = Math.abs(cameraZ - z);
-  const opacity = THREE.MathUtils.clamp(1.2 - distance * 0.4, 0, 0.85);
+  const opacity = THREE.MathUtils.clamp(1 - distance * 0.18, 0, 0.95);
 
   return (
     <group position={[0, 0, z]}>
-      {/* Translucent plane */}
+      {/* Translucent plane (larger, fills viewport) */}
       <mesh>
-        <planeGeometry args={[16, 16, 24, 24]} />
+        <planeGeometry args={[24, 24, 32, 32]} />
         <meshStandardMaterial
           color={color}
           transparent
-          opacity={opacity * 0.35}
+          opacity={opacity * 0.5}
           side={THREE.DoubleSide}
-          roughness={0.7}
+          roughness={0.6}
+          emissive={color}
+          emissiveIntensity={0.25}
         />
       </mesh>
       {/* Cell-like points */}
-      <CellTexture color={color} opacity={opacity * 0.85} />
+      <CellTexture color={color} opacity={opacity * 0.9} />
     </group>
   );
 }
@@ -147,9 +150,10 @@ function ExosomeDescent({ cameraZ }: { cameraZ: number }) {
 function CameraRig({ progress }: { progress: number }) {
   const { camera } = useThree();
   useFrame(() => {
-    // Smooth ease toward target Z based on scroll progress
-    const targetZ = 4 - progress * 13; // 4 → -9
-    camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 0.06);
+    // Camera flies *through* the strata — start just in front of stratum 0
+    // and dive past stratum 5 (z=-10). Range: z=1 → z=-11.
+    const targetZ = 1 - progress * 12;
+    camera.position.z = THREE.MathUtils.lerp(camera.position.z, targetZ, 0.08);
     camera.lookAt(0, 0, targetZ - 2);
   });
   return null;
@@ -157,7 +161,7 @@ function CameraRig({ progress }: { progress: number }) {
 
 function SkinScene({ progress }: { progress: number }) {
   // Track current camera z for stratum fade calc
-  const [camZ, setCamZ] = useState(4);
+  const [camZ, setCamZ] = useState(1);
   const { camera } = useThree();
   useFrame(() => setCamZ(camera.position.z));
 
@@ -219,7 +223,7 @@ export function LuxeSkinJourney() {
         {/* 3D canvas (full screen) */}
         <div className="absolute inset-0">
           <Canvas
-            camera={{ position: [0, 0, 4], fov: 50 }}
+            camera={{ position: [0, 0, 1], fov: 60 }}
             dpr={[1, 1.5]}
             gl={{ antialias: true, alpha: true }}
           >

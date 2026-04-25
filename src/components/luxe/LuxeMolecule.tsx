@@ -236,10 +236,9 @@ export function LuxeMolecule() {
           <p className="font-italic italic text-luxe-gold/75 text-sm tracking-[0.45em] uppercase mb-4">
             II · The Molecule
           </p>
-          <h2 className="font-serif text-h1 text-luxe-ivory leading-[1.1] tracking-tight mb-6">
-            一封寫給細胞的，
-            <br />
-            <span className="font-display italic text-luxe-gold">最短的信。</span>
+          <h2 className="font-serif-tc text-luxe-ivory leading-[1.2] tracking-[-0.005em] mb-6 font-medium" style={{ fontSize: "clamp(2rem, 4vw, 3.25rem)" }}>
+            一封寫給細胞的
+            <span className="block text-luxe-ivoryDim font-light mt-1">最短的信</span>
           </h2>
           <div className="h-px w-12 bg-luxe-gold mb-8" />
           <p className="font-sans text-luxe-ivoryDim text-body-lg leading-loose font-light max-w-md mb-12">
