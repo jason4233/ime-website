@@ -37,7 +37,7 @@ import { motion } from "framer-motion";
 //     parallax, Chinese typography overlay.
 // ═══════════════════════════════════════════════════════════════
 
-const PARTICLE_COUNT = 4000;
+const PARTICLE_COUNT = 1200;
 
 // Ambient particles that orbit AROUND the ampoule — not on it.
 // They're spawned in a wider shell so the glass mesh is the visual
@@ -537,25 +537,29 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
                 <Ampoule mousePower={mousePower} />
               </Float>
 
-              {/* Drei sparkles — warm gold motes drifting through scene */}
+              {/* Drei sparkles — sparse gold motes near the ampoule only.
+                  Earlier counts (400+120) were saturating the viewport with
+                  haze, drowning the glass. Now: a handful, tight scale. */}
               <Sparkles
-                count={400}
-                scale={[3.5, 6, 3.5]}
-                size={1.4}
-                speed={0.28}
-                opacity={0.85}
+                count={60}
+                scale={[2.2, 3.0, 2.2]}
+                size={1.6}
+                speed={0.22}
+                opacity={0.7}
                 color="#F5D08A"
               />
               <Sparkles
-                count={120}
-                scale={[6, 5, 6]}
+                count={20}
+                scale={[3.0, 2.5, 3.0]}
                 size={0.7}
-                speed={0.12}
-                opacity={0.5}
+                speed={0.10}
+                opacity={0.35}
                 color="#A374B8"
               />
 
-              {/* Custom-shader ambient field (lower density, atmospheric) */}
+              {/* Custom-shader ambient field — kept for atmosphere but
+                  with PARTICLE_COUNT cut at the source so it does not
+                  fill the viewport with snow-globe gray dust. */}
               <AmbientField mousePower={mousePower} />
 
               {/* Grounding shadow on the implied surface */}
