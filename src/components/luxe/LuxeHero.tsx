@@ -178,24 +178,24 @@ function Ampoule({ mousePower }: { mousePower: { current: number } }) {
   });
 
   return (
-    <group ref={groupRef} position={[0, -0.35, 0]} scale={0.6}>
+    <group ref={groupRef} position={[0, -0.35, 0]} rotation={[0, -0.18, 0]} scale={0.6}>
       {/* Glass shell — the hero of the scene */}
       <mesh castShadow>
         <latheGeometry args={[points, 64]} />
         <MeshTransmissionMaterial
-          transmission={1.0}
-          thickness={0.85}
-          roughness={0.05}
+          transmission={0.92}
+          thickness={1.4}
+          roughness={0.06}
           ior={1.52}
-          chromaticAberration={0.06}
+          chromaticAberration={0.08}
           clearcoat={1}
-          clearcoatRoughness={0.06}
-          attenuationColor={new THREE.Color("#E8C266")}
-          attenuationDistance={0.55}
-          color={new THREE.Color("#FFF4D6")}
-          envMapIntensity={1.6}
+          clearcoatRoughness={0.05}
+          attenuationColor={new THREE.Color("#D08F3F")}
+          attenuationDistance={0.28}
+          color={new THREE.Color("#FFE9C8")}
+          envMapIntensity={1.4}
           backside
-          backsideThickness={0.25}
+          backsideThickness={0.3}
           samples={6}
           resolution={512}
         />
@@ -203,19 +203,19 @@ function Ampoule({ mousePower }: { mousePower: { current: number } }) {
 
       {/* Liquid inside — warm amber, slight opacity, refracts the
           inside surface of the glass. */}
-      <mesh>
+      <mesh scale={[0.92, 0.92, 0.92]} position={[0, -0.05, 0]}>
         <latheGeometry args={[liquidPoints, 48]} />
         <meshPhysicalMaterial
-          color={new THREE.Color("#C8A06D")}
-          transmission={0.7}
-          thickness={1.4}
-          roughness={0.18}
+          color={new THREE.Color("#A77B3A")}
+          transmission={0.55}
+          thickness={2.0}
+          roughness={0.22}
           ior={1.34}
-          attenuationColor={new THREE.Color("#A77B3A")}
-          attenuationDistance={0.7}
+          attenuationColor={new THREE.Color("#7A4D1A")}
+          attenuationDistance={0.35}
+          emissive={new THREE.Color("#5A3A12")}
+          emissiveIntensity={0.25}
           envMapIntensity={1.2}
-          transparent
-          opacity={0.92}
         />
       </mesh>
 
@@ -385,22 +385,24 @@ function AmbientField({ mousePower }: { mousePower: { current: number } }) {
 function LightRig() {
   return (
     <>
-      <ambientLight intensity={0.22} />
-      {/* Warm key from front-right */}
-      <pointLight
-        position={[2.8, 1.2, 3.0]}
-        intensity={2.4}
-        color="#F5D08A"
-        distance={9}
-        decay={1.6}
+      <ambientLight intensity={0.05} />
+      {/* Warm key spot — chiaroscuro from upper-front-left */}
+      <spotLight
+        position={[-2.5, 4, 3.5]}
+        angle={0.42}
+        penumbra={0.85}
+        intensity={3.2}
+        color="#FFD9A8"
+        castShadow
+        shadow-mapSize={[1024, 1024]}
       />
-      {/* Cool rim from back-left for separation */}
-      <pointLight
-        position={[-3.2, -0.8, -1.5]}
-        intensity={1.6}
+      {/* Back rim purple — separation against dark bg */}
+      <spotLight
+        position={[3, 2, -1.5]}
+        angle={0.5}
+        penumbra={0.9}
+        intensity={1.4}
         color="#7A4D8E"
-        distance={10}
-        decay={2}
       />
       {/* Tight gold key directly behind for through-glass glow */}
       <pointLight
@@ -509,12 +511,15 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
             }}
             shadows
           >
+            {/* Explicit dark canvas bg — guarantees blackness behind transmission */}
+            <color attach="background" args={["#0A0A0D"]} />
             {/* Fog → far ambient particles dim, restoring depth */}
             <fog attach="fog" args={["#0A0A0D", 6, 22]} />
 
             <Suspense fallback={null}>
-              {/* HDRI environment — REQUIRED for transmission realism */}
-              <Environment preset="studio" background={false} />
+              {/* HDRI environment — warehouse preset has directional contrast,
+                  low intensity prevents bright fog inside the glass body. */}
+              <Environment preset="warehouse" background={false} environmentIntensity={0.45} />
 
               <LightRig />
 
@@ -553,10 +558,10 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
               {/* Grounding shadow on the implied surface */}
               <ContactShadows
                 position={[0, -1.65, 0]}
-                opacity={0.55}
+                opacity={0.75}
                 scale={5}
-                blur={2.6}
-                far={3}
+                blur={2.4}
+                far={4}
                 resolution={512}
                 color="#000000"
               />
