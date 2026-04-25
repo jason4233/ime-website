@@ -1,6 +1,7 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment, ContactShadows } from "@react-three/drei";
 import { Suspense, useRef } from "react";
 import * as THREE from "three";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -113,27 +114,37 @@ function VialScene() {
   return (
     <>
       <color attach="background" args={["#0A0A0D"]} />
-      <ambientLight intensity={0.45} />
-      {/* Key light (gold) */}
-      <directionalLight position={[3, 4, 5]} intensity={2.2} color="#F5F0E8" />
-      {/* Rim light (purple, behind) */}
-      <pointLight position={[-3, 0, -3]} intensity={3} color="#7A4D8E" distance={10} />
-      {/* Fill */}
-      <pointLight position={[2, -2, 4]} intensity={1.4} color="#CA8A04" distance={8} />
+      {/* Studio HDR — gives glass real reflections, transmission caustics, and depth */}
+      <Environment preset="studio" environmentIntensity={0.6} />
+
+      <ambientLight intensity={0.25} />
+      {/* Key light (warm) */}
+      <directionalLight position={[4, 5, 4]} intensity={2.5} color="#F5E8C8" castShadow />
+      {/* Rim light (purple, behind for back-glow) */}
+      <pointLight position={[-3, 1, -4]} intensity={3.5} color="#7A4D8E" distance={12} />
+      {/* Gold accent fill */}
+      <pointLight position={[2, -1, 5]} intensity={2.0} color="#CA8A04" distance={10} />
+      {/* Top spot to lift cap */}
+      <spotLight
+        position={[0, 4, 2]}
+        angle={0.4}
+        penumbra={0.6}
+        intensity={2}
+        color="#F5F0E8"
+        distance={8}
+      />
 
       <AmpouleBody />
 
-      {/* Floor reflection plane */}
-      <mesh position={[0, -1.55, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[1.2, 64]} />
-        <meshStandardMaterial
-          color="#0A0A0D"
-          metalness={0.7}
-          roughness={0.4}
-          opacity={0.5}
-          transparent
-        />
-      </mesh>
+      {/* Soft contact shadow under the bottle */}
+      <ContactShadows
+        position={[0, -1.55, 0]}
+        opacity={0.6}
+        scale={5}
+        blur={2.4}
+        far={2}
+        color="#000000"
+      />
     </>
   );
 }

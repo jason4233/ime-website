@@ -314,6 +314,16 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
         </div>
       )}
 
+      {/* Layer 1.5: vertical gradient veil to lift text legibility above particles */}
+      <div
+        aria-hidden
+        className="absolute inset-0 z-[5] pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(10,10,13,0) 0%, rgba(10,10,13,0.55) 35%, rgba(10,10,13,0.55) 65%, rgba(10,10,13,0) 100%)",
+        }}
+      />
+
       {/* Layer 2: SVG film grain overlay (subtle texture) */}
       <svg
         aria-hidden
