@@ -1,0 +1,414 @@
+"use client";
+
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Suspense, useMemo, useRef, useEffect, useState } from "react";
+import * as THREE from "three";
+import { motion } from "framer-motion";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// ═══════════════════════════════════════════════════════════════
+//   LuxeHero — Liquid Gold Particles → Ampoule Silhouette
+//   Per ui-ux-pro-max: Pattern "Immersive/Interactive Experience"
+//   Style "Liquid Glass" — premium luxury portfolios
+//   Particles are mathematically positioned to FORM a bottle shape
+//   on idle, then disperse on mouse move (cause-effect motion)
+// ═══════════════════════════════════════════════════════════════
+
+const PARTICLE_COUNT = 4500;
+
+// Generate target positions: a parametric ampoule bottle silhouette
+function bottlePositions(count: number): Float32Array {
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    const t = i / count;
+    // Y from -1.6 (bottom) to +1.6 (top) — bottle vertical extent
+    const y = -1.6 + t * 3.2;
+
+    // Bottle radius profile (piecewise smooth curve)
+    let r: number;
+    if (y < -1.0) {
+      // Base — flat
+      r = 0.45;
+    } else if (y < 0.6) {
+      // Body — elegantly curved
+      const yn = (y + 1.0) / 1.6;
+      r = 0.45 - 0.05 * Math.sin(yn * Math.PI);
+    } else if (y < 1.1) {
+      // Shoulder — narrows
+      const yn = (y - 0.6) / 0.5;
+      r = 0.42 - 0.27 * yn;
+    } else if (y < 1.45) {
+      // Neck — thin
+      r = 0.15;
+    } else {
+      // Cap — slightly wider
+      r = 0.22;
+    }
+
+    // Distribute on cylinder surface + small inward jitter for "liquid" feel
+    const angle = t * Math.PI * 2 * 11.7; // golden ratio spread
+    const jitter = (Math.random() - 0.5) * 0.04;
+    pos[i * 3 + 0] = (r + jitter) * Math.cos(angle);
+    pos[i * 3 + 1] = y;
+    pos[i * 3 + 2] = (r + jitter) * Math.sin(angle);
+  }
+  return pos;
+}
+
+function ParticleBottle({ mousePower }: { mousePower: { current: number } }) {
+  const ref = useRef<THREE.Points>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const { mouse, viewport } = useThree();
+
+  // Pre-compute target (bottle) and seed (random sphere) positions
+  const { targets, seeds, sizes } = useMemo(() => {
+    const targets = bottlePositions(PARTICLE_COUNT);
+    const seeds = new Float32Array(PARTICLE_COUNT * 3);
+    const sizes = new Float32Array(PARTICLE_COUNT);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      // Random points in sphere (uniform via cube-rejection)
+      let x, y, z;
+      do {
+        x = (Math.random() - 0.5) * 4;
+        y = (Math.random() - 0.5) * 4;
+        z = (Math.random() - 0.5) * 4;
+      } while (x * x + y * y + z * z > 4);
+      seeds[i * 3 + 0] = x;
+      seeds[i * 3 + 1] = y;
+      seeds[i * 3 + 2] = z;
+      sizes[i] = 0.4 + Math.random() * 0.6;
+    }
+    return { targets, seeds, sizes };
+  }, []);
+
+  // Animated buffer — interpolated each frame
+  const positions = useMemo(() => new Float32Array(targets), [targets]);
+
+  useFrame((state, delta) => {
+    if (!ref.current) return;
+    const t = state.clock.getElapsedTime();
+    const power = mousePower.current; // 0 = bottle, 1 = dispersed
+    const arr = ref.current.geometry.attributes.position.array as Float32Array;
+    const colors = ref.current.geometry.attributes.color?.array as Float32Array;
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const i3 = i * 3;
+      // Interpolate target ↔ seed using mousePower
+      const tx = targets[i3] * (1 - power) + seeds[i3] * power;
+      const ty = targets[i3 + 1] * (1 - power) + seeds[i3 + 1] * power;
+      const tz = targets[i3 + 2] * (1 - power) + seeds[i3 + 2] * power;
+
+      // Idle drift (subtle breathing)
+      const breath = 0.012 * Math.sin(t * 0.7 + i * 0.013);
+      const swirl = 0.008 * Math.cos(t * 0.5 + i * 0.018);
+
+      // Smooth lerp toward target
+      arr[i3] += (tx + breath - arr[i3]) * 0.06;
+      arr[i3 + 1] += (ty + swirl - arr[i3 + 1]) * 0.06;
+      arr[i3 + 2] += (tz - arr[i3 + 2]) * 0.06;
+
+      // Color: gold core → soft purple at edges based on radius
+      if (colors) {
+        const r = Math.sqrt(arr[i3] ** 2 + arr[i3 + 1] ** 2 + arr[i3 + 2] ** 2);
+        const norm = Math.min(1, r / 2.2);
+        // gold #CA8A04 (0.79, 0.54, 0.02) → cell purple #A374B8 (0.64, 0.45, 0.72)
+        colors[i3] = 0.79 - norm * 0.15;
+        colors[i3 + 1] = 0.54 - norm * 0.09;
+        colors[i3 + 2] = 0.02 + norm * 0.7;
+      }
+    }
+    ref.current.geometry.attributes.position.needsUpdate = true;
+    if (ref.current.geometry.attributes.color)
+      ref.current.geometry.attributes.color.needsUpdate = true;
+
+    // Rotate the whole group very slowly + subtle parallax to mouse
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.06;
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(
+        groupRef.current.rotation.x,
+        (mouse.y * 0.15) / Math.max(1, viewport.factor),
+        0.03
+      );
+    }
+  });
+
+  // Color buffer (initialized once)
+  const colors = useMemo(() => {
+    const c = new Float32Array(PARTICLE_COUNT * 3);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      c[i * 3] = 0.79;
+      c[i * 3 + 1] = 0.54;
+      c[i * 3 + 2] = 0.02;
+    }
+    return c;
+  }, []);
+
+  return (
+    <group ref={groupRef}>
+      <points ref={ref}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            count={PARTICLE_COUNT}
+            array={positions}
+            itemSize={3}
+          />
+          <bufferAttribute
+            attach="attributes-color"
+            count={PARTICLE_COUNT}
+            array={colors}
+            itemSize={3}
+          />
+          <bufferAttribute
+            attach="attributes-size"
+            count={PARTICLE_COUNT}
+            array={sizes}
+            itemSize={1}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.022}
+          sizeAttenuation
+          vertexColors
+          transparent
+          opacity={0.95}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+    </group>
+  );
+}
+
+function GoldGlow() {
+  return (
+    <>
+      {/* Gentle backlight to lift the particle field */}
+      <ambientLight intensity={0.4} />
+      <pointLight
+        position={[0, 0, 4]}
+        intensity={2.5}
+        color="#CA8A04"
+        distance={8}
+        decay={1.5}
+      />
+      <pointLight
+        position={[-3, -2, 3]}
+        intensity={1.2}
+        color="#7A4D8E"
+        distance={10}
+        decay={2}
+      />
+    </>
+  );
+}
+
+interface HeroData {
+  headline?: string | null;
+  subheadline?: string | null;
+  ctaText?: string | null;
+  ctaLink?: string | null;
+}
+
+export function LuxeHero({ data }: { data?: HeroData | null }) {
+  const mousePower = useRef(0);
+  const [reduced, setReduced] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(m.matches);
+    const onChange = () => setReduced(m.matches);
+    m.addEventListener("change", onChange);
+
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setScrollY(window.scrollY));
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      m.removeEventListener("change", onChange);
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  // Mouse-induced dispersion
+  const onMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    const dist = Math.sqrt(x * x + y * y);
+    mousePower.current = Math.min(0.55, dist * 0.9);
+  };
+  const onMouseLeave = () => {
+    // Smooth ease back to bottle
+    const ease = () => {
+      mousePower.current *= 0.92;
+      if (mousePower.current > 0.002) requestAnimationFrame(ease);
+      else mousePower.current = 0;
+    };
+    ease();
+  };
+
+  const headline = data?.headline ?? "妳值得，被細胞溫柔對待。";
+  const subline =
+    data?.subheadline ?? "每 1mL 安瓶 2,000 億顆臍帶間質幹細胞外泌體。";
+  const ctaText = data?.ctaText ?? "我想預約";
+
+  // Hero parallax — content fades & translates as you scroll
+  const heroProgress = Math.min(1, scrollY / 700);
+
+  return (
+    <section
+      className="relative h-[100dvh] w-full overflow-hidden bg-luxe-bgBase"
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+    >
+      {/* Layer 0: ambient gradient backdrop (renders even if R3F fails) */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_50%_50%,rgba(202,138,4,0.18),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_50%_at_30%_70%,rgba(122,77,142,0.14),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_30%_30%_at_70%_30%,rgba(199,227,216,0.06),transparent_70%)]" />
+      </div>
+
+      {/* Layer 1: 3D particle bottle */}
+      {!reduced && (
+        <div className="absolute inset-0">
+          <Canvas
+            camera={{ position: [0, 0, 5], fov: 38 }}
+            dpr={[1, 1.5]}
+            gl={{ antialias: true, alpha: true }}
+          >
+            <Suspense fallback={null}>
+              <GoldGlow />
+              <ParticleBottle mousePower={mousePower} />
+            </Suspense>
+          </Canvas>
+        </div>
+      )}
+
+      {/* Layer 2: SVG film grain overlay (subtle texture) */}
+      <svg
+        aria-hidden
+        className="absolute inset-0 h-full w-full opacity-[0.06] mix-blend-overlay pointer-events-none"
+      >
+        <filter id="luxe-grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" />
+          <feColorMatrix values="0 0 0 0 1  0 0 0 0 0.92  0 0 0 0 0.78  0 0 0 0.6 0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#luxe-grain)" />
+      </svg>
+
+      {/* Layer 3: Decorative hairlines */}
+      <div className="absolute top-0 left-[12%] h-[28vh] w-px bg-gradient-to-b from-luxe-gold/40 to-transparent z-10" />
+      <div className="absolute bottom-0 right-[14%] h-[18vh] w-px bg-gradient-to-t from-luxe-gold/30 to-transparent z-10" />
+
+      {/* Layer 20: Content */}
+      <motion.div
+        className="relative z-20 flex h-full flex-col items-center justify-center px-6 text-center"
+        style={{
+          opacity: 1 - heroProgress * 0.8,
+          transform: `translateY(${heroProgress * -40}px)`,
+        }}
+      >
+        {/* Whisper */}
+        <motion.p
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="font-italic italic text-luxe-gold/80 text-[0.75rem] sm:text-sm tracking-[0.5em] uppercase mb-6 sm:mb-8"
+        >
+          Cellular Atelier · Est. 2025
+        </motion.p>
+
+        {/* Headline */}
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.4, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="font-serif text-display-xl text-luxe-ivory leading-[0.95] tracking-[-0.025em] max-w-5xl mb-8"
+        >
+          {headline.split(/[，,]/).map((part, i) => (
+            <span key={i} className="block">
+              {i === 1 ? (
+                <span className="font-display italic text-luxe-gold">{part}</span>
+              ) : (
+                part
+              )}
+              {i === 0 && "，"}
+            </span>
+          ))}
+        </motion.h1>
+
+        {/* Subline */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.4, delay: 1.0 }}
+          className="font-sans text-luxe-ivoryDim text-base sm:text-lg leading-relaxed font-light max-w-xl mb-12 tracking-wide"
+        >
+          {subline}
+        </motion.p>
+
+        {/* Decorative gold rule */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 1.6, delay: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="h-px w-24 bg-luxe-gold/60 mb-12 origin-center"
+        />
+
+        {/* CTA */}
+        <motion.a
+          href="#appointment"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 1.4 }}
+          className="group relative inline-flex items-center gap-3 overflow-hidden rounded-pill border border-luxe-gold/50 bg-luxe-gold/5 px-8 py-4 font-sans text-sm font-medium tracking-[0.18em] uppercase text-luxe-gold backdrop-blur-sm transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-luxe-gold hover:text-luxe-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luxe-gold focus-visible:ring-offset-2 focus-visible:ring-offset-luxe-bgBase"
+        >
+          <span
+            aria-hidden
+            className="absolute inset-0 -z-10 origin-left scale-x-0 bg-luxe-gold transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100"
+          />
+          <span className="relative">{ctaText}</span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            className="relative transition-transform duration-700 group-hover:translate-x-1"
+          >
+            <path
+              d="M2 7h10m0 0L7 2m5 5L7 12"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+            />
+          </svg>
+        </motion.a>
+
+        {/* Scroll hint */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 2, delay: 2.2 }}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+        >
+          <span className="font-italic italic text-[0.65rem] tracking-[0.4em] uppercase text-luxe-ivoryFade">
+            scroll
+          </span>
+          <span className="block h-12 w-px bg-gradient-to-b from-luxe-gold/60 to-transparent">
+            <motion.span
+              animate={{ y: [0, 36, 0], opacity: [0.8, 0, 0.8] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+              className="block h-3 w-px bg-luxe-gold"
+            />
+          </span>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}

@@ -1,4 +1,13 @@
-import { Noto_Serif_TC, Noto_Sans_TC, Playfair_Display, Inter, Cormorant_Garamond, Bodoni_Moda } from "next/font/google";
+import {
+  Noto_Serif_TC,
+  Noto_Sans_TC,
+  Playfair_Display,
+  Inter,
+  Cormorant_Garamond,
+  Bodoni_Moda,
+  Fraunces,
+  Jost,
+} from "next/font/google";
 
 export const notoSerifTC = Noto_Serif_TC({
   subsets: ["latin"],
@@ -44,5 +53,22 @@ export const bodoniModa = Bodoni_Moda({
   weight: ["400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
   variable: "--font-statement",
+  display: "swap",
+});
+
+// v4 Luxe — Fraunces (variable serif heading) + Jost (geometric body)
+// 由 ui-ux-pro-max --design-system 推薦的 Luxury Minimalist pairing
+export const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-serif-luxe",
+  display: "swap",
+});
+
+export const jost = Jost({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-sans-luxe",
   display: "swap",
 });

@@ -85,20 +85,44 @@ const config: Config = {
           light: "#A0BBA8",
           dark: "#5A7A64",
         },
+        // ═══════════════════════════════════════════════════
+        // V4 — Luxe "Cellular Atelier"
+        // 來自 ui-ux-pro-max skill 的 --design-system 推薦
+        // Pattern: Immersive/Interactive · Style: Liquid Glass
+        // ═══════════════════════════════════════════════════
+        luxe: {
+          ink: "#0C0A09",
+          ivory: "#F5F0E8",
+          ivoryDim: "#A8A39A",
+          ivoryFade: "#6A6760",
+          obsidian: "#1C1917",
+          charcoal: "#44403C",
+          gold: "#CA8A04",          // PRIMARY CTA
+          goldLight: "#E8B23F",
+          cell: "#7A4D8E",          // 細胞紫
+          cellLight: "#A374B8",
+          serum: "#C7E3D8",         // medical credibility
+          bgBase: "#0A0A0D",
+          bgElevated: "#14141A",
+        },
       },
       fontFamily: {
         "serif-tc": ["var(--font-serif-tc)", "serif"],
         "sans-tc": ["var(--font-sans-tc)", "sans-serif"],
-        display: ["var(--font-display)", "serif"],
+        display: ["var(--font-statement)", '"Bodoni Moda"', "serif"],
         body: ["var(--font-body)", "sans-serif"],
         elegant: ["var(--font-elegant)", "serif"],
+        italic: ["var(--font-elegant)", '"Cormorant Garamond"', "serif"],
+        // v4 Luxe — ui-ux-pro-max skill 推薦的 "Luxury Minimalist" pairing
+        serif: ["var(--font-serif-luxe)", "Fraunces", "serif"],
+        sans: ["var(--font-sans-luxe)", "Jost", "system-ui", "sans-serif"],
+        statement: ["var(--font-statement)", '"Bodoni Moda"', "serif"],
         handwriting: ['"ChenYuluoyan"', '"Noto Serif TC"', "serif"],
-        // v3 Luxury Minimalist statement serif — Vogue/Harper's Bazaar
-        // 用在巨型數字(2,000 億 / +47% / 76.8–99.4nm)最強衝擊
-        statement: ["var(--font-statement)", "Bodoni Moda", "serif"],
       },
       fontSize: {
         // 標題系統
+        "display-2xl": ["clamp(4rem, 12vw, 9rem)", { lineHeight: "0.9", letterSpacing: "-0.04em" }],
+        "display-xl": ["clamp(3rem, 8vw, 6.5rem)", { lineHeight: "0.95", letterSpacing: "-0.03em" }],
         "hero": ["clamp(3rem, 8vw, 7.5rem)", { lineHeight: "1.05", letterSpacing: "-0.03em" }],
         "h1": ["clamp(2.5rem, 5vw, 4.5rem)", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
         "h2": ["clamp(2rem, 4vw, 3rem)", { lineHeight: "1.15", letterSpacing: "-0.02em" }],
@@ -119,6 +143,9 @@ const config: Config = {
       },
       borderRadius: {
         "brand": "0.375rem",
+        pin: "2px",
+        card: "12px",
+        pill: "999px",
       },
       boxShadow: {
         "elevated": "0 4px 24px -2px rgba(10, 10, 10, 0.06), 0 2px 8px -2px rgba(10, 10, 10, 0.04)",
