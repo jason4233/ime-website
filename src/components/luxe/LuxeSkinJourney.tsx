@@ -221,34 +221,33 @@ function SkinScene({ progress }: { progress: number }) {
 
       <CameraRig progress={progress} />
 
-      {/* Foreground: dense bright cells in immediate vicinity of camera */}
+      {/* Tight, dense, BIG cells right around camera path. Smaller volume so
+          all points stay close-to-camera and visibly bright. */}
       <Sparkles
-        count={2200}
-        scale={[8, 8, 30]}
-        position={[0, 0, -6]}
-        size={6}
-        speed={0.15}
+        count={500}
+        scale={[4, 4, 8]}
+        position={[0, 0, -2]}
+        size={28}
+        speed={0.4}
         opacity={1}
-        color={progress < 0.5 ? "#F5C9A8" : progress < 0.8 ? "#B85A7A" : "#E8B23F"}
+        color={progress < 0.4 ? "#F5C9A8" : progress < 0.7 ? "#B85A7A" : "#E8B23F"}
       />
-      {/* Mid-range tissue scatter */}
       <Sparkles
-        count={1800}
-        scale={[14, 14, 30]}
-        position={[0, 0, -6]}
-        size={3}
-        speed={0.08}
-        opacity={0.7}
-        color={progress < 0.5 ? "#E8B07F" : progress < 0.8 ? "#A374B8" : "#CA8A04"}
+        count={400}
+        scale={[6, 6, 12]}
+        position={[0, 0, -4]}
+        size={18}
+        speed={0.25}
+        opacity={0.85}
+        color={progress < 0.4 ? "#E8B07F" : progress < 0.7 ? "#A374B8" : "#CA8A04"}
       />
-      {/* Distant ambient glow */}
       <Sparkles
-        count={1000}
-        scale={[20, 20, 30]}
+        count={300}
+        scale={[10, 10, 16]}
         position={[0, 0, -6]}
-        size={1.5}
-        speed={0.04}
-        opacity={0.5}
+        size={10}
+        speed={0.15}
+        opacity={0.6}
         color="#7A4D8E"
       />
 
