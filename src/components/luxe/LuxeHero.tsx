@@ -482,11 +482,14 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
     >
-      {/* Layer 0: ambient gradient backdrop — unchanged */}
+      {/* Layer 0: ambient corner-only vignette accents (NOT center) — leaves
+          the central viewport dark so the glass ampoule reads cleanly
+          against bg, instead of showing through transparent canvas as fog. */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_70%_at_50%_50%,rgba(202,138,4,0.18),transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_50%_at_30%_70%,rgba(122,77,142,0.14),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_30%_30%_at_70%_30%,rgba(199,227,216,0.06),transparent_70%)]" />
+        {/* Lower-left purple breath — corner only, falls off well before center */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_30%_30%_at_8%_88%,rgba(122,77,142,0.10),transparent_55%)]" />
+        {/* Upper-right ivory breath — corner only */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_28%_22%_at_92%_8%,rgba(199,227,216,0.04),transparent_55%)]" />
       </div>
 
       {/* Layer 1: 3D physical ampoule scene */}
@@ -570,22 +573,16 @@ export function LuxeHero({ data }: { data?: HeroData | null }) {
         </div>
       )}
 
-      {/* Layer 1.5: vertical gradient veil to lift text legibility.
-          Stronger center band (text region) + radial dark behind text. */}
+      {/* Layer 1.5: minimal localized text backdrop. Only enough darkening
+          near the headline band (~38–48% Y) for readability against the
+          bottle's amber rim. Keep the center mostly transparent so the
+          glass ampoule shows through clearly. */}
       <div
         aria-hidden
         className="absolute inset-0 z-[5] pointer-events-none"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(10,10,13,0.15) 0%, rgba(10,10,13,0.55) 30%, rgba(10,10,13,0.6) 55%, rgba(10,10,13,0.35) 80%, rgba(10,10,13,0.05) 100%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 z-[6] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 55% 45% at 50% 42%, rgba(10,10,13,0.55) 0%, rgba(10,10,13,0.25) 50%, transparent 80%)",
+            "linear-gradient(to bottom, transparent 0%, rgba(10,10,13,0.12) 25%, rgba(10,10,13,0.18) 50%, transparent 75%, transparent 100%)",
         }}
       />
 
