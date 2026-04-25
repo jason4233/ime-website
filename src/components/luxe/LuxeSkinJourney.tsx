@@ -23,7 +23,7 @@ const STRATA = [
   { z:-12.5, zh: "外泌體抵達",   en: "Exosome arrival",           color: new THREE.Color("#E8B23F") },
 ];
 
-const PARTICLE_COUNT = 4500;
+const PARTICLE_COUNT = 12000;
 
 function colorAtZ(z: number): THREE.Color {
   // Interpolate between adjacent strata colors based on z position
@@ -48,8 +48,8 @@ function CellTunnel() {
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       // Z spans the full tunnel
       const z = 3 - Math.random() * 19; // +3 → -16
-      // Tube cross-section: hollow ring r=0.8 to 4.5
-      const r = 0.8 + Math.sqrt(Math.random()) * 3.7;
+      // Tube cross-section: tighter, closer to camera path
+      const r = 0.35 + Math.sqrt(Math.random()) * 2.6;
       const theta = Math.random() * Math.PI * 2;
       positions[i * 3] = Math.cos(theta) * r;
       positions[i * 3 + 1] = Math.sin(theta) * r;
@@ -109,7 +109,7 @@ function CellTunnel() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.08}
+        size={0.18}
         sizeAttenuation
         vertexColors
         transparent
