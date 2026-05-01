@@ -61,7 +61,7 @@ export function ImageUpload({ value, onChange, folder = "images" }: ImageUploadP
     onDrop,
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
     maxFiles: 1,
-    maxSize: 5 * 1024 * 1024, // 5MB
+    maxSize: 15 * 1024 * 1024, // 15MB
   });
 
   function handleRemove(e: React.MouseEvent) {
@@ -117,7 +117,7 @@ export function ImageUpload({ value, onChange, folder = "images" }: ImageUploadP
               {uploading ? "上傳中..." : "拖拉圖片或點擊上傳"}
             </p>
             <p className="text-[0.6rem] text-ivory/15 font-body mt-1">
-              JPG / PNG / WebP · 最大 5MB
+              JPG / PNG / WebP · 最大 15MB
             </p>
           </div>
         )}

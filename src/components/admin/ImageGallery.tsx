@@ -98,7 +98,7 @@ export function ImageGallery({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
-    maxSize: 5 * 1024 * 1024,
+    maxSize: 15 * 1024 * 1024, // 15MB
     multiple: true,
   });
 
