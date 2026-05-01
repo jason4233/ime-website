@@ -53,7 +53,9 @@ export function ProductSection({ data }: ProductSectionProps = {}) {
   const productTagline = main?.tagline ?? "1mL Lyophilized Ampoule";
   const productDesc =
     main?.description ?? "不是疊加一層保養,\n是送一封訊息給妳的細胞。";
+  // 圖片優先順序:gallery 第一張(後台拖拉排序的主圖) → imageUrl(向下相容) → placeholder
   const productImage =
+    (main?.gallery && main.gallery.length > 0 ? main.gallery[0] : null) ??
     main?.imageUrl ??
     "https://placehold.co/400x500/111111/B8953F?text=USC-E%0AAmpoule";
 

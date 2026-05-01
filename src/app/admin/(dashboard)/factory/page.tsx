@@ -50,7 +50,7 @@ const fields = [
       { value: "FACTORY", label: "工廠 (FACTORY)" },
     ],
   },
-  { name: "imageUrl", label: "圖片網址", type: "text" as const },
+  { name: "imageUrl", label: "代表圖片", type: "image" as const, folder: "factory" },
   { name: "iconName", label: "Icon 名稱", type: "text" as const },
 ];
 

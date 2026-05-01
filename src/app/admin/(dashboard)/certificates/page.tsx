@@ -20,8 +20,8 @@ const columns: Column<Certificate>[] = [
 const fields = [
   { name: "title", label: "認證名稱", type: "text" as const, required: true },
   { name: "issuer", label: "發證單位", type: "text" as const, required: true },
-  { name: "imageUrl", label: "圖片網址", type: "text" as const },
-  { name: "pdfUrl", label: "PDF 網址", type: "text" as const },
+  { name: "imageUrl", label: "證書圖片", type: "image" as const, folder: "certificates" },
+  { name: "pdfUrl", label: "PDF 網址(選填,直接連結 PDF)", type: "text" as const },
 ];
 
 export default function AdminCertificatesPage() {

@@ -37,7 +37,7 @@ const fields = [
   { name: "subheadline", label: "副標題", type: "textarea" as const, required: true },
   { name: "ctaText", label: "按鈕文字", type: "text" as const },
   { name: "ctaLink", label: "按鈕連結", type: "text" as const },
-  { name: "bgImageUrl", label: "背景圖片網址", type: "text" as const },
+  { name: "bgImageUrl", label: "背景圖片", type: "image" as const, folder: "hero" },
   { name: "isActive", label: "啟用此區塊", type: "checkbox" as const },
 ];
 

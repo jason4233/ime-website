@@ -19,7 +19,7 @@ const columns: Column<BrandStorySection>[] = [
 const fields = [
   { name: "title", label: "標題", type: "text" as const, required: true },
   { name: "bodyRichText", label: "內文", type: "textarea" as const, required: true },
-  { name: "imageUrl", label: "圖片網址", type: "text" as const },
+  { name: "imageUrl", label: "圖片", type: "image" as const, folder: "brand-story" },
 ];
 
 export default function AdminBrandStoryPage() {

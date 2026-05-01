@@ -3,14 +3,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { AdminTable, Column } from "./AdminTable";
 import { ConfirmModal } from "./ConfirmModal";
+import { ImageUpload } from "./ImageUpload";
+import { ImageGallery } from "./ImageGallery";
 
 interface FieldDef {
   name: string;
   label: string;
-  type: "text" | "textarea" | "number" | "email" | "tel" | "date" | "select" | "checkbox" | "richtext" | "image";
+  type: "text" | "textarea" | "number" | "email" | "tel" | "date" | "select" | "checkbox" | "richtext" | "image" | "gallery";
   required?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;
+  /** 上傳到 Vercel Blob 的子資料夾,只用在 type=image / type=gallery */
+  folder?: string;
+  /** type=gallery 限制圖片總數,預設 8 */
+  max?: number;
 }
 
 interface CrudPageProps<T extends { id: string }> {
@@ -215,6 +221,19 @@ export function CrudPage<T extends { id: string; order?: number }>({
                       />
                       <span className="text-sm text-ivory/50 font-body">{field.label}</span>
                     </label>
+                  ) : field.type === "image" ? (
+                    <ImageUpload
+                      value={String(formData[field.name] || "")}
+                      onChange={(url) => updateField(field.name, url)}
+                      folder={field.folder ?? "images"}
+                    />
+                  ) : field.type === "gallery" ? (
+                    <ImageGallery
+                      value={(formData[field.name] as string[]) || []}
+                      onChange={(urls) => updateField(field.name, urls)}
+                      folder={field.folder ?? "images"}
+                      max={field.max ?? 8}
+                    />
                   ) : (
                     <input
                       type={field.type}

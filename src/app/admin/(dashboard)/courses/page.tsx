@@ -38,7 +38,7 @@ const fields = [
   { name: "durationMinutes", label: "時長 (分鐘)", type: "number" as const },
   { name: "price", label: "價格", type: "number" as const },
   { name: "suitableFor", label: "適合對象", type: "text" as const },
-  { name: "imageUrl", label: "課程圖片網址", type: "text" as const },
+  { name: "imageUrl", label: "課程圖片", type: "image" as const, folder: "courses" },
 ];
 
 export default function AdminCoursesPage() {

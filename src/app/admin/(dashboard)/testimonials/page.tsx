@@ -40,7 +40,7 @@ const fields = [
   { name: "courseType", label: "課程類型", type: "text" as const },
   { name: "rating", label: "評分 (1-5)", type: "number" as const },
   { name: "content", label: "見證內容", type: "textarea" as const, required: true },
-  { name: "avatarUrl", label: "頭像網址", type: "text" as const },
+  { name: "avatarUrl", label: "頭像", type: "image" as const, folder: "testimonials" },
   { name: "isVideo", label: "影片見證", type: "checkbox" as const },
   { name: "videoUrl", label: "影片網址", type: "text" as const, placeholder: "https://..." },
 ];
