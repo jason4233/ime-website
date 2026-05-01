@@ -17,6 +17,8 @@ interface FieldDef {
   folder?: string;
   /** type=gallery 限制圖片總數,預設 8 */
   max?: number;
+  /** type=image 預覽框的長寬比(寬/高),要跟前台一致 */
+  aspectRatio?: number;
 }
 
 interface CrudPageProps<T extends { id: string }> {
@@ -87,6 +89,8 @@ export function CrudPage<T extends { id: string; order?: number }>({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
+      // 寫入 DB 後立刻清前台 CMS 快取,確保使用者重整公開頁就看到新內容
+      await fetch("/api/admin/revalidate", { method: "POST" }).catch(() => {});
       setShowForm(false);
       fetchItems();
     } catch (e) { console.error(e); }
@@ -98,6 +102,7 @@ export function CrudPage<T extends { id: string; order?: number }>({
     setDeleting(true);
     try {
       await fetch(`${apiPath}/${deleteItem.id}`, { method: "DELETE" });
+      await fetch("/api/admin/revalidate", { method: "POST" }).catch(() => {});
       setDeleteItem(null);
       fetchItems();
     } catch (e) { console.error(e); }
@@ -226,6 +231,7 @@ export function CrudPage<T extends { id: string; order?: number }>({
                       value={String(formData[field.name] || "")}
                       onChange={(url) => updateField(field.name, url)}
                       folder={field.folder ?? "images"}
+                      aspectRatio={field.aspectRatio ?? 16 / 9}
                     />
                   ) : field.type === "gallery" ? (
                     <ImageGallery

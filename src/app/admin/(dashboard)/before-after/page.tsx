@@ -26,8 +26,8 @@ const columns: Column<BeforeAfterCase>[] = [
 
 const fields = [
   { name: "title", label: "標題", type: "text" as const, required: true },
-  { name: "beforeImageUrl", label: "術前圖片", type: "image" as const, required: true, folder: "before-after" },
-  { name: "afterImageUrl", label: "術後圖片", type: "image" as const, required: true, folder: "before-after" },
+  { name: "beforeImageUrl", label: "術前圖片(直幅 3:4)", type: "image" as const, required: true, folder: "before-after", aspectRatio: 3 / 4 },
+  { name: "afterImageUrl", label: "術後圖片(直幅 3:4)", type: "image" as const, required: true, folder: "before-after", aspectRatio: 3 / 4 },
   { name: "daysBetween", label: "間隔天數", type: "number" as const, required: true },
   { name: "notes", label: "備註", type: "textarea" as const },
 ];

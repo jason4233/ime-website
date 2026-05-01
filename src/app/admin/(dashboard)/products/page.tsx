@@ -35,7 +35,7 @@ const fields = [
   { name: "tagline", label: "標語", type: "text" as const, required: true },
   { name: "description", label: "產品描述", type: "textarea" as const, required: true },
   { name: "price", label: "價格", type: "number" as const },
-  { name: "imageUrl", label: "主圖(單張)", type: "image" as const, folder: "products" },
+  { name: "imageUrl", label: "主圖(直幅瓶身 4:5)", type: "image" as const, folder: "products", aspectRatio: 4 / 5 },
   { name: "gallery", label: "產品輪播圖(多張可拖拉排序)", type: "gallery" as const, folder: "products", max: 8 },
 ];
 

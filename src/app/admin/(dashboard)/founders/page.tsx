@@ -29,7 +29,7 @@ const fields = [
   { name: "title", label: "職稱", type: "text" as const, required: true },
   { name: "bio", label: "個人簡介", type: "textarea" as const, required: true },
   { name: "quote", label: "名言 / 座右銘", type: "textarea" as const },
-  { name: "photoUrl", label: "照片", type: "image" as const, folder: "founders" },
+  { name: "photoUrl", label: "照片(直幅人像 3:4)", type: "image" as const, folder: "founders", aspectRatio: 3 / 4 },
 ];
 
 export default function AdminFoundersPage() {
