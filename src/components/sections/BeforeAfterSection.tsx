@@ -23,31 +23,45 @@ type CaseItem = {
   after: string;
 };
 
+// ─────────────────────────────────────────────────────────────────
+// 法規合規重要說明:
+// 本品為一般化粧品,依《化粧品衛生安全管理法》第 10 條,
+// 廣告不得涉及醫療效能,亦不得有虛偽、誇大情事。
+// 因此本區塊一律避免使用以下詞彙:
+//   ✗ 雷射 / 術後 / 醫療 / 療程 / 修復(指真皮) / 治療
+//   ✗ 改善膚色 / 淡化斑點 / 抗皺 / 抗老 / 除皺 / 緊實肌膚(深層)
+//   ✗ 細紋改善 / 暗沉改善 / 鬆弛改善 / 美白 / 淡疤 / 再生
+// 可用詞(食藥署 2023 版例示):
+//   ✓ 保濕 / 滋潤 / 潤澤 / 柔嫩 / 平滑 / 緊緻(角質層)
+//   ✓ 亮采 / 光澤 / 修護(角質層)
+//   ✓ 保養紀錄 / 使用感受 / 肌膚柔嫩度 / 保水度 / 滋潤度
+// ─────────────────────────────────────────────────────────────────
+
 const fallbackCases: CaseItem[] = [
   {
     id: 1,
-    title: "雷射術後修復",
+    title: "乾燥粗糙肌的保濕日記",
     days: 14,
-    sessions: 3,
-    note: "皮秒雷射後搭配外泌體導入，泛紅明顯舒緩（個人體驗，效果因人而異）",
+    sessions: 14, // 用「次」中性表達使用頻率
+    note: "每日早晚使用，14 天後肌膚保水度的個人感受紀錄",
     before: "https://placehold.co/500x600/2a1a1a/D4A89B?text=Before",
     after: "https://placehold.co/500x600/1a2a1a/B8953F?text=After",
   },
   {
     id: 2,
-    title: "暗沉膚色改善",
+    title: "肌膚潤澤感體驗",
     days: 30,
-    sessions: 5,
-    note: "持續五次泌容術療程，肌膚光澤度有感提升（個人體驗，效果因人而異）",
+    sessions: 30,
+    note: "持續使用 5 週後，肌膚潤澤度與光澤感的個人保養紀錄",
     before: "https://placehold.co/500x600/2a1a1a/D4A89B?text=Before",
     after: "https://placehold.co/500x600/1a2a1a/B8953F?text=After",
   },
   {
     id: 3,
-    title: "細紋與鬆弛改善",
+    title: "肌膚柔嫩度日記",
     days: 60,
-    sessions: 8,
-    note: "持續保養兩個月，膚觸更加細緻平滑（個人體驗，效果因人而異）",
+    sessions: 60,
+    note: "持續保養 60 天，肌膚柔嫩感與膚觸平滑度的個人紀錄",
     before: "https://placehold.co/500x600/2a1a1a/D4A89B?text=Before",
     after: "https://placehold.co/500x600/1a2a1a/B8953F?text=After",
   },
@@ -103,12 +117,12 @@ function CaseCard({ caseItem, index }: { caseItem: CaseItem; index: number }) {
         <h4 className="font-serif-tc text-lg text-ivory font-medium mb-2">
           {caseItem.title}
         </h4>
-        <div className="flex gap-2 mb-3">
+        <div className="flex gap-2 mb-3 flex-wrap">
           <span className="px-2 py-0.5 text-[0.6rem] font-body rounded-full bg-gold/10 text-gold">
-            相隔 {caseItem.days} 天
+            持續 {caseItem.days} 天
           </span>
           <span className="px-2 py-0.5 text-[0.6rem] font-body rounded-full bg-brand/10 text-brand-light">
-            {caseItem.sessions} 次療程
+            日常居家使用
           </span>
         </div>
         {caseItem.note && (
@@ -116,6 +130,9 @@ function CaseCard({ caseItem, index }: { caseItem: CaseItem; index: number }) {
             {caseItem.note}
           </p>
         )}
+        <p className="mt-3 pt-3 border-t border-ivory/5 text-[0.6rem] text-ivory/25 font-body leading-relaxed">
+          ※ 個人保養感受紀錄,結果因人而異
+        </p>
       </div>
     </motion.div>
   );
@@ -132,7 +149,7 @@ export function BeforeAfterSection({ data }: { data?: any[] } = {}) {
         <div className="text-center mb-16">
           <TextReveal>
             <p className="text-overline text-gold/50 uppercase tracking-[0.25em] font-body mb-4">
-              Before & After
+              Skin Diary · 肌膚保養紀錄
             </p>
           </TextReveal>
           <TextReveal delay={0.1}>
@@ -141,8 +158,13 @@ export function BeforeAfterSection({ data }: { data?: any[] } = {}) {
             </h2>
           </TextReveal>
           <TextReveal delay={0.2}>
-            <p className="font-sans-tc text-body text-ivory/30 mt-3 max-w-md mx-auto">
-              左右拖動滑桿，看見真實改變。圖片上線前將替換為實際案例。
+            <p className="font-sans-tc text-body text-ivory/30 mt-3 max-w-xl mx-auto">
+              左右拖動滑桿，看見每位使用者的個別保養紀錄。
+            </p>
+          </TextReveal>
+          <TextReveal delay={0.3}>
+            <p className="mt-4 max-w-xl mx-auto text-[0.7rem] text-ivory/25 font-body leading-relaxed">
+              以下為使用者個人保養紀錄分享。本品為一般化粧品，不具醫療效能。
             </p>
           </TextReveal>
         </div>
@@ -151,6 +173,16 @@ export function BeforeAfterSection({ data }: { data?: any[] } = {}) {
           {cases.map((c, i) => (
             <CaseCard key={c.id} caseItem={c} index={i} />
           ))}
+        </div>
+
+        {/* 法定聲明 — 必須清楚可讀,不可隱藏 */}
+        <div className="mt-12 max-w-3xl mx-auto px-4 py-4 rounded-md border border-ivory/5 bg-night/40">
+          <p className="text-[0.65rem] text-ivory/35 font-body leading-relaxed text-center">
+            <span className="text-ivory/50">法定聲明 ｜ </span>
+            本網頁所示產品已依《化粧品衛生安全管理法》登錄，屬一般化粧品，非醫療器材或藥品，無治療或預防疾病之功能。
+            圖像所呈現之膚況變化為使用者個別保養感受紀錄，並非每一位使用者皆能達到相同結果。
+            如有皮膚相關困擾，建議諮詢專業皮膚科醫師。
+          </p>
         </div>
       </div>
     </section>
