@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { useInView } from "framer-motion";
+import { stripFocalPoint, urlToObjectPosition } from "@/lib/utils/focal-point";
 
 // 改版：移除 GSAP ScrollTrigger pin（DOM 突變導致 React insertBefore 崩潰）
 // 改用 CSS position:sticky + 原生 scroll progress 驅動 translateX，實現水平滾動效果
@@ -100,9 +101,10 @@ export function ProductSection({ data }: ProductSectionProps = {}) {
                 <div className="relative w-64 h-80 md:w-80 md:h-[400px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={productImage}
+                    src={stripFocalPoint(productImage)}
                     alt={productName}
                     className="w-full h-full object-contain relative z-10"
+                    style={{ objectPosition: urlToObjectPosition(productImage) }}
                   />
                   {/* 光暈 */}
                   <div className="absolute inset-0 -m-8 rounded-full bg-brand/5 blur-3xl" />

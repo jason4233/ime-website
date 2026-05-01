@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { motion, useInView } from "framer-motion";
 import { ReactCompareSliderImage } from "react-compare-slider";
 import { TextReveal } from "@/components/ui/TextReveal";
+import { stripFocalPoint, urlToObjectPosition } from "@/lib/utils/focal-point";
 
 // 動態載入避免 SSR 階段呼叫 CSS.registerProperty
 const ReactCompareSlider = dynamic(
@@ -82,14 +83,16 @@ function CaseCard({ caseItem, index }: { caseItem: CaseItem; index: number }) {
         <ReactCompareSlider
           itemOne={
             <ReactCompareSliderImage
-              src={caseItem.before}
+              src={stripFocalPoint(caseItem.before)}
               alt={`${caseItem.title} Before`}
+              style={{ objectPosition: urlToObjectPosition(caseItem.before) }}
             />
           }
           itemTwo={
             <ReactCompareSliderImage
-              src={caseItem.after}
+              src={stripFocalPoint(caseItem.after)}
               alt={`${caseItem.title} After`}
+              style={{ objectPosition: urlToObjectPosition(caseItem.after) }}
             />
           }
         />

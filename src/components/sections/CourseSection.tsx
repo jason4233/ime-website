@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { TextReveal } from "@/components/ui/TextReveal";
 import { MagneticButton } from "@/components/ui/MagneticButton";
+import { FocalImage } from "@/components/ui/FocalImage";
 
 const courses = [
   {
@@ -83,13 +84,12 @@ function CourseCard({ course, index }: { course: typeof courses[0]; index: numbe
                      p-6 transition-all duration-300 shadow-elevated
                      [backface-visibility:hidden]`}
         >
-          {/* 圖片 */}
+          {/* 圖片 — 後台拖曳焦點,確保人臉/主體不被裁切 */}
           <div className="aspect-[4/3] rounded-lg overflow-hidden mb-6 bg-mist">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FocalImage
               src={course.imageUrl}
               alt={course.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full"
             />
           </div>
 

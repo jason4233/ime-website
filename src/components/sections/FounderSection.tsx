@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { TextReveal } from "@/components/ui/TextReveal";
+import { FocalImage } from "@/components/ui/FocalImage";
 
 type FounderItem = {
   id: string;
@@ -114,11 +115,10 @@ function FounderCard({
               boxShadow: "0 4px 40px -8px rgba(123, 47, 190, 0.15), 0 0 0 1px rgba(184, 149, 63, 0.15)",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <FocalImage
               src={founder.photoUrl}
               alt={founder.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full"
             />
 
             {/* 漸層覆蓋 */}
