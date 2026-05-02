@@ -46,7 +46,8 @@ const fields = [
   { name: "excerpt", label: "摘要", type: "textarea" as const },
   { name: "url", label: "連結網址", type: "text" as const, placeholder: "https://..." },
   { name: "date", label: "日期", type: "date" as const, required: true },
-  { name: "mediaLogoUrl", label: "媒體 Logo", type: "image" as const, folder: "news-logos" },
+  // mediaLogoUrl 已移除:NewsSection 目前用 hardcoded 媒體列表 + ogImage,後台無法控制
+  // { name: "mediaLogoUrl", label: "媒體 Logo", type: "image" as const, folder: "news-logos" },
   { name: "isFeatured", label: "設為精選", type: "checkbox" as const },
 ];
 

@@ -40,7 +40,8 @@ const fields = [
   { name: "courseType", label: "課程類型", type: "text" as const },
   { name: "rating", label: "評分 (1-5)", type: "number" as const },
   { name: "content", label: "見證內容", type: "textarea" as const, required: true },
-  { name: "avatarUrl", label: "頭像(正方形)", type: "image" as const, folder: "testimonials", aspectRatio: 1 },
+  // avatarUrl 已移除:見證區塊使用文字/SVG 頭像,前台不顯示上傳的圖
+  // { name: "avatarUrl", label: "頭像(正方形)", type: "image" as const, folder: "testimonials", aspectRatio: 1 },
   { name: "isVideo", label: "影片見證", type: "checkbox" as const },
   { name: "videoUrl", label: "影片網址", type: "text" as const, placeholder: "https://..." },
 ];

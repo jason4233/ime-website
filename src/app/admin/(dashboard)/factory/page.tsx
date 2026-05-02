@@ -50,7 +50,8 @@ const fields = [
       { value: "FACTORY", label: "工廠 (FACTORY)" },
     ],
   },
-  { name: "imageUrl", label: "代表圖片", type: "image" as const, folder: "factory" },
+  // imageUrl 已移除:FactorySection 是純文字佈局,不顯示圖片
+  // { name: "imageUrl", label: "代表圖片", type: "image" as const, folder: "factory" },
   { name: "iconName", label: "Icon 名稱", type: "text" as const },
 ];
 
